@@ -1,7 +1,12 @@
 <?php
 /**
  * Authentication and Authorization Helper Functions
+ * Includes Serverless Stateless Session & CSRF Synchronization
  */
+
+if (ob_get_level() === 0) {
+    ob_start();
+}
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -9,6 +14,134 @@ if (session_status() === PHP_SESSION_NONE) {
 
 require_once __DIR__ . '/database.php';
 require_once __DIR__ . '/constants.php';
+
+/**
+ * Secret key for signing session & CSRF cookies (Serverless persistence)
+ */
+define('RECON_APP_SECRET', getenv('APP_SECRET') ?: 'recon_secret_sig_key_2026_987413620984712');
+
+/**
+ * Restore session data from signed cookie if native serverless session was lost
+ */
+function recon_restore_signed_session() {
+    $secret = RECON_APP_SECRET;
+
+    if (!empty($_COOKIE['RECON_SESSION'])) {
+        $parts = explode('.', $_COOKIE['RECON_SESSION'], 2);
+        if (count($parts) === 2) {
+            $json = base64_decode($parts[0], true);
+            if ($json !== false) {
+                $expectedSig = hash_hmac('sha256', $json, $secret);
+                if (hash_equals($expectedSig, $parts[1])) {
+                    $payload = json_decode($json, true);
+                    if (is_array($payload)) {
+                        foreach ($payload as $k => $v) {
+                            if (!isset($_SESSION[$k])) {
+                                $_SESSION[$k] = $v;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Restore or initialize CSRF token
+    if (empty($_SESSION['csrf_token'])) {
+        if (!empty($_COOKIE['RECON_CSRF'])) {
+            $_SESSION['csrf_token'] = $_COOKIE['RECON_CSRF'];
+        } else {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        }
+    }
+}
+
+/**
+ * Save current session into signed cookie for serverless persistence
+ */
+function recon_save_session_cookie() {
+    if (session_status() !== PHP_SESSION_ACTIVE) {
+        return;
+    }
+
+    $secret = RECON_APP_SECRET;
+    $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+        || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
+
+    if (!empty($_SESSION) && (isset($_SESSION['user_id']) || isset($_SESSION['csrf_token']))) {
+        $json = json_encode($_SESSION);
+        $sig = hash_hmac('sha256', $json, $secret);
+        $cookieValue = base64_encode($json) . '.' . $sig;
+
+        if (!headers_sent()) {
+            setcookie('RECON_SESSION', $cookieValue, [
+                'expires'  => time() + 86400 * 7,
+                'path'     => '/',
+                'secure'   => $isHttps,
+                'httponly' => true,
+                'samesite' => 'Lax'
+            ]);
+        }
+    } elseif (isset($_COOKIE['RECON_SESSION']) && !headers_sent()) {
+        setcookie('RECON_SESSION', '', [
+            'expires'  => time() - 3600,
+            'path'     => '/',
+            'secure'   => $isHttps,
+            'httponly' => true,
+            'samesite' => 'Lax'
+        ]);
+    }
+
+    if (!empty($_SESSION['csrf_token']) && !headers_sent()) {
+        setcookie('RECON_CSRF', $_SESSION['csrf_token'], [
+            'expires'  => time() + 86400 * 7,
+            'path'     => '/',
+            'secure'   => $isHttps,
+            'httponly' => false,
+            'samesite' => 'Lax'
+        ]);
+    }
+}
+
+/**
+ * Destroy session and clear persistence cookies
+ */
+function recon_destroy_session() {
+    $_SESSION = [];
+    $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+        || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
+
+    if (!headers_sent()) {
+        setcookie('RECON_SESSION', '', [
+            'expires'  => time() - 3600,
+            'path'     => '/',
+            'secure'   => $isHttps,
+            'httponly' => true,
+            'samesite' => 'Lax'
+        ]);
+        setcookie('RECON_CSRF', '', [
+            'expires'  => time() - 3600,
+            'path'     => '/',
+            'secure'   => $isHttps,
+            'httponly' => false,
+            'samesite' => 'Lax'
+        ]);
+        if (ini_get("session.use_cookies")) {
+            $params = session_get_cookie_params();
+            setcookie(session_name(), '', time() - 42000, $params["path"], $params["domain"], $params["secure"], $params["httponly"]);
+        }
+    }
+
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        session_destroy();
+    }
+}
+
+// Restore session from cookie immediately
+recon_restore_signed_session();
+
+// Ensure cookies are saved at end of request execution
+register_shutdown_function('recon_save_session_cookie');
 
 /**
  * Check if a user is currently logged in
@@ -29,8 +162,7 @@ function require_login() {
     // Check session timeout if configured
     $timeout = isset($_SESSION['session_timeout']) ? $_SESSION['session_timeout'] : 3600;
     if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > $timeout)) {
-        session_unset();
-        session_destroy();
+        recon_destroy_session();
         header("Location: index.php?timeout=1");
         exit;
     }
@@ -63,7 +195,7 @@ function has_permission($permission_slug) {
     }
     
     // Super Admin has all permissions
-    if ($_SESSION['role_slug'] === ROLE_SUPER_ADMIN) {
+    if (isset($_SESSION['role_slug']) && $_SESSION['role_slug'] === ROLE_SUPER_ADMIN) {
         return true;
     }
 
@@ -73,15 +205,19 @@ function has_permission($permission_slug) {
     }
 
     // Fallback: Query database
-    $pdo = getDBConnection();
-    $stmt = $pdo->prepare("
-        SELECT p.slug 
-        FROM permissions p
-        INNER JOIN role_permissions rp ON p.id = rp.permission_id
-        WHERE rp.role_id = ? AND p.slug = ?
-    ");
-    $stmt->execute([$_SESSION['role_id'], $permission_slug]);
-    return (bool)$stmt->fetch();
+    try {
+        $pdo = getDBConnection();
+        $stmt = $pdo->prepare("
+            SELECT p.slug 
+            FROM permissions p
+            INNER JOIN role_permissions rp ON p.id = rp.permission_id
+            WHERE rp.role_id = ? AND p.slug = ?
+        ");
+        $stmt->execute([$_SESSION['role_id'], $permission_slug]);
+        return (bool)$stmt->fetch();
+    } catch (Exception $e) {
+        return false;
+    }
 }
 
 /**
@@ -107,7 +243,7 @@ function require_permission($permission_slug, $is_api = false) {
 function has_role($roles) {
     if (!is_logged_in()) return false;
     if (is_string($roles)) $roles = [$roles];
-    return in_array($_SESSION['role_slug'], $roles);
+    return isset($_SESSION['role_slug']) && in_array($_SESSION['role_slug'], $roles);
 }
 
 /**
@@ -132,16 +268,46 @@ function require_role($roles, $is_api = false) {
  */
 function generate_csrf_token() {
     if (empty($_SESSION['csrf_token'])) {
-        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        if (!empty($_COOKIE['RECON_CSRF'])) {
+            $_SESSION['csrf_token'] = $_COOKIE['RECON_CSRF'];
+        } else {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        }
     }
+
+    $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+        || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
+
+    if (!headers_sent() && (empty($_COOKIE['RECON_CSRF']) || $_COOKIE['RECON_CSRF'] !== $_SESSION['csrf_token'])) {
+        setcookie('RECON_CSRF', $_SESSION['csrf_token'], [
+            'expires'  => time() + 86400 * 7,
+            'path'     => '/',
+            'secure'   => $isHttps,
+            'httponly' => false,
+            'samesite' => 'Lax'
+        ]);
+    }
+
     return $_SESSION['csrf_token'];
 }
 
 function verify_csrf_token($token) {
-    if (empty($_SESSION['csrf_token']) || empty($token)) {
+    if (empty($token) || !is_string($token)) {
         return false;
     }
-    return hash_equals($_SESSION['csrf_token'], $token);
+
+    // Match against current session token
+    if (!empty($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $token)) {
+        return true;
+    }
+
+    // Match against fallback cookie token (critical for serverless / multi-instance environments)
+    if (!empty($_COOKIE['RECON_CSRF']) && hash_equals($_COOKIE['RECON_CSRF'], $token)) {
+        $_SESSION['csrf_token'] = $token;
+        return true;
+    }
+
+    return false;
 }
 
 function require_csrf() {

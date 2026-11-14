@@ -4,7 +4,6 @@
  * School Reconciliation Management System
  */
 
-session_start();
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/config/constants.php';
 require_once __DIR__ . '/config/auth.php';
@@ -29,47 +28,58 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif (empty($username) || empty($password)) {
         $error_message = 'Please provide both username and password.';
     } else {
-        $pdo = getDBConnection();
-        $stmt = $pdo->prepare("
-            SELECT u.*, r.slug AS role_slug, r.name AS role_name 
-            FROM users u
-            JOIN roles r ON r.id = u.role_id
-            WHERE u.username = ? AND u.is_active = 1
-            LIMIT 1
-        ");
-        $stmt->execute([$username]);
-        $user = $stmt->fetch();
+        try {
+            $pdo = getDBConnection();
+            $stmt = $pdo->prepare("
+                SELECT u.*, r.slug AS role_slug, r.name AS role_name 
+                FROM users u
+                JOIN roles r ON r.id = u.role_id
+                WHERE u.username = ? AND u.is_active = 1
+                LIMIT 1
+            ");
+            $stmt->execute([$username]);
+            $user = $stmt->fetch();
 
-        if ($user && password_verify($password, $user['password_hash'])) {
-            // Regenerate session id to prevent session fixation
-            session_regenerate_id(true);
+            if ($user && password_verify($password, $user['password_hash'])) {
+                // Regenerate session id to prevent session fixation
+                session_regenerate_id(true);
 
-            $_SESSION['user_id'] = $user['id'];
-            $_SESSION['username'] = $user['username'];
-            $_SESSION['full_name'] = $user['full_name'] ?? $user['username'];
-            $_SESSION['role_id'] = $user['role_id'];
-            $_SESSION['role_slug'] = $user['role_slug'];
-            $_SESSION['role_name'] = $user['role_name'];
-            $_SESSION['last_activity'] = time();
+                $_SESSION['user_id'] = $user['id'];
+                $_SESSION['username'] = $user['username'];
+                $_SESSION['full_name'] = $user['full_name'] ?? $user['username'];
+                $_SESSION['role_id'] = $user['role_id'];
+                $_SESSION['role_slug'] = $user['role_slug'];
+                $_SESSION['role_name'] = $user['role_name'];
+                $_SESSION['last_activity'] = time();
 
-            // Load session timeout from settings
-            $timeout_min = (int)get_setting('session_timeout_minutes', 60);
-            $_SESSION['session_timeout'] = $timeout_min * 60;
+                // Load session timeout from settings
+                $timeout_min = (int)get_setting('session_timeout_minutes', 60);
+                $_SESSION['session_timeout'] = $timeout_min * 60;
 
-            // Load user permissions into session
-            refresh_user_permissions($user['role_id']);
+                // Load user permissions into session
+                refresh_user_permissions($user['role_id']);
 
-            // Update last login timestamp
-            $upd = $pdo->prepare("UPDATE users SET last_login = NOW() WHERE id = ?");
-            $upd->execute([$user['id']]);
+                // Update last login timestamp
+                $upd = $pdo->prepare("UPDATE users SET last_login = NOW() WHERE id = ?");
+                $upd->execute([$user['id']]);
 
-            log_activity('LOGIN', 'User successfully logged in.');
+                log_activity('LOGIN', 'User successfully logged in.');
 
-            header("Location: dashboard.php");
-            exit;
-        } else {
-            $error_message = 'Invalid username or password.';
-            log_activity('LOGIN_FAILED', "Failed login attempt for username: {$username}");
+                // Explicitly sync signed cookie before redirect
+                recon_save_session_cookie();
+
+                header("Location: dashboard.php");
+                exit;
+            } else {
+                $error_message = 'Invalid username or password.';
+                try {
+                    log_activity('LOGIN_FAILED', "Failed login attempt for username: {$username}");
+                } catch (Exception $ignored) {}
+            }
+        } catch (PDOException $e) {
+            $error_message = 'Database connection error: ' . $e->getMessage() . '. Please verify database environment variables in Vercel settings.';
+        } catch (Exception $e) {
+            $error_message = 'An unexpected error occurred: ' . $e->getMessage();
         }
     }
 }
