@@ -181,7 +181,6 @@ include __DIR__ . '/includes/header.php';
                     <input type="text" id="wsIssueInput" class="form-control" placeholder="Enter issue reference (e.g. REF102, 123)" autocomplete="off">
                     <div id="wsIssueWarning" class="input-warning-msg"></div>
                 </div>
-                <?php if (has_permission('access_urgent_cases')): ?>
                 <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 6px;">
                     <label style="font-size: 12px; color: #b91c1c; font-weight: 600; display: flex; align-items: center; gap: 6px; cursor: pointer;">
                         <input type="checkbox" id="wsUrgentCheck">
@@ -193,7 +192,6 @@ include __DIR__ . '/includes/header.php';
                         <option value="Medium">Medium Priority</option>
                     </select>
                 </div>
-                <?php endif; ?>
             </div>
 
             <!-- Section C: Refund Controls (Light-orange button + alphanumeric input) -->
@@ -252,11 +250,9 @@ include __DIR__ . '/includes/header.php';
                 </div>
             </div>
             <div>
-                <?php if (has_role(ROLE_SUPER_ADMIN) || has_permission('undo_actions')): ?>
                 <button type="button" class="btn btn-sm btn-outline-secondary" id="btnResetRecord" style="display:none; color: #dc2626; border-color: #fecaca;">
                     ↺ Reset to Pending
                 </button>
-                <?php endif; ?>
             </div>
         </div>
     </div>

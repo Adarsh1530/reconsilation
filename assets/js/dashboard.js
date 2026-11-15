@@ -213,11 +213,8 @@ function loadSessionRecords() {
 
                 // If currently open school is in cache, refresh its workspace state
                 if (activeSchoolId) {
-                    const isSuperAdmin = document.getElementById('isSuperAdmin')?.value === '1';
                     const currentRec = recordsCache.find(r => parseInt(r.school_id, 10) === activeSchoolId);
-                    if (currentRec && currentRec.is_completed == 1 && !isSuperAdmin) {
-                        closeWorkspace();
-                    } else if (currentRec) {
+                    if (currentRec) {
                         renderWorkspace(currentRec);
                     }
                 }
@@ -256,7 +253,6 @@ function renderSchoolDropdown(records) {
     const select = document.getElementById('schoolSelector');
     if (!select) return;
 
-    const isSuperAdmin = document.getElementById('isSuperAdmin')?.value === '1';
     const currentVal = select.value;
     select.innerHTML = '<option value="">-- Choose a School to Reconcile --</option>';
 
@@ -264,12 +260,7 @@ function renderSchoolDropdown(records) {
         const opt = document.createElement('option');
         opt.value = r.school_id;
         if (r.is_completed == 1) {
-            if (isSuperAdmin) {
-                opt.textContent = `✓ [Completed] ${r.school_code} - ${r.school_name} (Super Admin Access)`;
-            } else {
-                opt.textContent = `🔒 [Completed] ${r.school_code} - ${r.school_name}`;
-                opt.disabled = true;
-            }
+            opt.textContent = `✓ [Completed] ${r.school_code} - ${r.school_name}`;
         } else {
             opt.textContent = `⏳ ${r.school_code} - ${r.school_name} [${r.overall_remark || 'Pending'}]`;
         }
@@ -468,29 +459,17 @@ function renderMainTable(records) {
         // Only Super Admin can access again even if it is completed.
         let actionBtn = '';
         if (rec.is_completed == 1) {
-            if (isSuperAdmin) {
-                // Super Admin: can reopen and can access workspace
-                actionBtn = `
-                    <div style="display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;">
-                        ${adminResolveBtn}
-                        <button type="button" class="btn btn-sm btn-complete-active" onclick="event.stopPropagation(); toggleSchoolCompletion(${rec.school_id}, 0)" title="Super Admin: Click to reopen task">
-                            ✓ Completed
-                        </button>
-                        <button class="btn btn-sm btn-outline-secondary" onclick="handleSelectSchoolFromTable(${rec.school_id})" title="Super Admin: Access school workspace">
-                            Select
-                        </button>
-                    </div>
-                `;
-            } else {
-                // Non-Super Admin: disabled and shows completed only
-                actionBtn = `
-                    <div style="display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;">
-                        <button type="button" class="btn btn-sm btn-complete-active" disabled style="opacity: 0.95; cursor: not-allowed; pointer-events: none; font-weight: 700;" title="School reconciliation completed. Only Super Admin can access.">
-                            ✓ Completed
-                        </button>
-                    </div>
-                `;
-            }
+            actionBtn = `
+                <div style="display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;">
+                    ${adminResolveBtn}
+                    <button type="button" class="btn btn-sm btn-complete-active" onclick="event.stopPropagation(); toggleSchoolCompletion(${rec.school_id}, 0)" title="Click to reopen task">
+                        ✓ Completed
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="handleSelectSchoolFromTable(${rec.school_id})" title="Access school workspace">
+                        Select
+                    </button>
+                </div>
+            `;
         } else {
             // Pending task: regular Complete and Select buttons
             actionBtn = `
@@ -701,14 +680,6 @@ window.copyPasswordToClipboard = function(text, el) {
  * Handle selecting a school from the table "Select" button
  */
 window.handleSelectSchoolFromTable = function(schoolId) {
-    const isSuperAdmin = document.getElementById('isSuperAdmin')?.value === '1';
-    const rec = recordsCache.find(r => parseInt(r.school_id, 10) === parseInt(schoolId, 10));
-
-    if (rec && rec.is_completed == 1 && !isSuperAdmin) {
-        showToast('warning', 'Access Restricted', 'This school reconciliation is completed. Only Super Admin can access completed schools.');
-        return;
-    }
-
     if (isWorkflowLocked && activeSchoolId !== schoolId) {
         showToast('warning', 'Task In Progress', 'Please complete the reconciliation for the current school before selecting another.');
         return;
@@ -723,18 +694,9 @@ window.handleSelectSchoolFromTable = function(schoolId) {
  * Opens reconciliation workspace, manages workflow lock
  */
 function selectSchool(schoolId) {
-    const isSuperAdmin = document.getElementById('isSuperAdmin')?.value === '1';
     activeSchoolId = parseInt(schoolId, 10);
     const rec = recordsCache.find(r => parseInt(r.school_id, 10) === activeSchoolId);
     if (!rec) return;
-
-    if (rec.is_completed == 1 && !isSuperAdmin) {
-        showToast('warning', 'Access Restricted', 'This school reconciliation is completed. Only Super Admin can access completed schools.');
-        const select = document.getElementById('schoolSelector');
-        if (select) select.value = '';
-        closeWorkspace();
-        return;
-    }
 
     const workspace = document.getElementById('activeWorkspaceCard');
     if (workspace) workspace.classList.remove('hidden');
@@ -1147,16 +1109,11 @@ window.resolveUrgentPrompt = function(schoolId, schoolName, countRef) {
 };
 
 window.toggleSchoolCompletion = function(schoolId, targetCompleted) {
-    const isSuperAdmin = document.getElementById('isSuperAdmin')?.value === '1';
     const rec = recordsCache.find(r => parseInt(r.school_id, 10) === parseInt(schoolId, 10));
     if (!rec) return;
 
-    // CASE 1: Reopening a completed task (Only Super Admin permitted)
+    // CASE 1: Reopening a completed task
     if (targetCompleted === 0) {
-        if (!isSuperAdmin) {
-            showToast('warning', 'Access Restricted', 'This school reconciliation is completed. Only Super Admin can reopen completed tasks.');
-            return;
-        }
         confirmModal({
             title: 'Reopen Reconciliation Task',
             message: `
@@ -1338,14 +1295,6 @@ function postReconAction(actionName, data, loadingMsg = 'Processing...') {
     .then(res => {
         if (res.success) {
             showToast('success', 'Saved', res.message);
-            const isSuperAdmin = document.getElementById('isSuperAdmin')?.value === '1';
-            if ((actionName === 'mark_completed' && data.is_completed == 1) || 
-                actionName === 'save_payment_no_payment' || 
-                actionName === 'save_payment_success') {
-                if (!isSuperAdmin) {
-                    closeWorkspace();
-                }
-            }
             // Refresh records and update workspace
             loadSessionRecords();
             unlockWorkspace();

@@ -144,11 +144,6 @@ try {
             $rec = get_or_create_record($pdo, $school_id, $date, $session);
             $prev_state = json_encode($rec);
 
-            if (!empty($rec['is_completed']) && !has_role(ROLE_SUPER_ADMIN)) {
-                $pdo->rollBack();
-                json_response(['success' => false, 'message' => 'This school reconciliation is completed. Only Super Admin can modify or reopen completed records.'], 403);
-            }
-
             // Mutually exclusive: disables payment success, recon issue, refund
             $upd = $pdo->prepare("
                 UPDATE reconciliation_records 
@@ -203,11 +198,6 @@ try {
             // Fetch or create record
             $rec = get_or_create_record($pdo, $school_id, $date, $session);
             $prev_state = json_encode($rec);
-
-            if (!empty($rec['is_completed']) && !has_role(ROLE_SUPER_ADMIN)) {
-                $pdo->rollBack();
-                json_response(['success' => false, 'message' => 'This school reconciliation is completed. Only Super Admin can modify or reopen completed records.'], 403);
-            }
 
             // Mutually exclusive: disables no payment, recon issue, refund
             $upd = $pdo->prepare("
@@ -283,11 +273,6 @@ try {
 
             $rec = get_or_create_record($pdo, $school_id, $date, $session);
             $prev_state = json_encode($rec);
-
-            if (!empty($rec['is_completed']) && !has_role(ROLE_SUPER_ADMIN)) {
-                $pdo->rollBack();
-                json_response(['success' => false, 'message' => 'This school reconciliation is completed. Only Super Admin can modify or reopen completed records.'], 403);
-            }
 
             $upd = $pdo->prepare("
                 UPDATE reconciliation_records 
@@ -444,11 +429,6 @@ try {
             $rec = get_or_create_record($pdo, $school_id, $date, $session);
             $prev_state = json_encode($rec);
 
-            if (!empty($rec['is_completed']) && !has_role(ROLE_SUPER_ADMIN)) {
-                $pdo->rollBack();
-                json_response(['success' => false, 'message' => 'This school reconciliation is completed. Only Super Admin can modify or reopen completed records.'], 403);
-            }
-
             $upd = $pdo->prepare("
                 UPDATE reconciliation_records 
                 SET refund_status = 'PROCESSED',
@@ -504,11 +484,6 @@ try {
 
             $rec = get_or_create_record($pdo, $school_id, $date, $session);
             $prev_state = json_encode($rec);
-
-            if (!empty($rec['is_completed']) && !has_role(ROLE_SUPER_ADMIN)) {
-                $pdo->rollBack();
-                json_response(['success' => false, 'message' => 'This school reconciliation is completed. Only Super Admin can modify completed records.'], 403);
-            }
 
             $upd = $pdo->prepare("
                 UPDATE reconciliation_records 
@@ -618,12 +593,6 @@ try {
             $rec = get_or_create_record($pdo, $school_id, $date, $session);
             $prev_state = json_encode($rec);
 
-            // Reopening a completed record can ONLY be performed by Super Admin
-            if ($is_completed === 0 && !has_role(ROLE_SUPER_ADMIN)) {
-                $pdo->rollBack();
-                json_response(['success' => false, 'message' => 'This school reconciliation is completed. Only Super Admin can reopen completed records.'], 403);
-            }
-
             if ($is_completed === 1) {
                 // If remark was 'Pending' or empty, set to 'Completed'
                 $remark = ($rec['overall_remark'] === 'Pending' || empty($rec['overall_remark'])) ? 'Completed' : $rec['overall_remark'];
@@ -693,10 +662,7 @@ try {
          */
         case 'reset_record':
             require_csrf();
-            // User needs to be Super Admin or have permission
-            if (!has_role(ROLE_SUPER_ADMIN) && !has_permission('undo_actions')) {
-                json_response(['success' => false, 'message' => 'Permission denied. Only Super Admin or authorized manager can reset records.'], 403);
-            }
+            require_permission('manage_reconciliation', true);
 
             $school_id = (int)($_POST['school_id'] ?? 0);
             $date = $_POST['date'] ?? date('Y-m-d');
@@ -706,11 +672,6 @@ try {
 
             $rec = get_or_create_record($pdo, $school_id, $date, $session);
             $prev_state = json_encode($rec);
-
-            if (!empty($rec['is_completed']) && !has_role(ROLE_SUPER_ADMIN)) {
-                $pdo->rollBack();
-                json_response(['success' => false, 'message' => 'This school reconciliation is completed. Only Super Admin can modify or reopen completed records.'], 403);
-            }
 
             $upd = $pdo->prepare("
                 UPDATE reconciliation_records 
