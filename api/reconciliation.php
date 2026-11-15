@@ -5,6 +5,9 @@
  */
 
 header('Content-Type: application/json; charset=UTF-8');
+header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+header('Pragma: no-cache');
+header('Expires: 0');
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/constants.php';
 require_once __DIR__ . '/../config/auth.php';
@@ -154,11 +157,13 @@ try {
                     refund_reference = NULL,
                     overall_remark = 'No Payment',
                     is_completed = 1,
+                    completed_by = COALESCE(completed_by, :comp_uid),
+                    completed_at = COALESCE(completed_at, NOW()),
                     updated_by = :uid,
                     updated_at = NOW()
                 WHERE id = :id
             ");
-            $upd->execute([':uid' => $user['id'], ':id' => $rec['id']]);
+            $upd->execute([':uid' => $user['id'], ':comp_uid' => $user['id'], ':id' => $rec['id']]);
 
             $new_rec = get_or_create_record($pdo, $school_id, $date, $session);
             $new_state = json_encode($new_rec);
@@ -209,11 +214,13 @@ try {
                     refund_reference = NULL,
                     overall_remark = 'Payment Success',
                     is_completed = 1,
+                    completed_by = COALESCE(completed_by, :comp_uid),
+                    completed_at = COALESCE(completed_at, NOW()),
                     updated_by = :uid,
                     updated_at = NOW()
                 WHERE id = :id
             ");
-            $upd->execute([':uid' => $user['id'], ':id' => $rec['id']]);
+            $upd->execute([':uid' => $user['id'], ':comp_uid' => $user['id'], ':id' => $rec['id']]);
 
             $new_rec = get_or_create_record($pdo, $school_id, $date, $session);
             $new_state = json_encode($new_rec);
@@ -282,6 +289,8 @@ try {
                     overall_remark = :remark,
                     is_urgent = :is_urgent,
                     is_completed = :is_completed,
+                    completed_by = IF(:is_comp = 1, COALESCE(completed_by, :comp_uid), completed_by),
+                    completed_at = IF(:is_comp = 1, COALESCE(completed_at, NOW()), completed_at),
                     updated_by = :uid,
                     updated_at = NOW()
                 WHERE id = :id
@@ -291,6 +300,8 @@ try {
                 ':remark' => $remark,
                 ':is_urgent' => $is_urgent,
                 ':is_completed' => $is_completed,
+                ':is_comp' => $is_completed,
+                ':comp_uid' => $user['id'],
                 ':uid' => $user['id'],
                 ':id' => $rec['id']
             ]);
@@ -436,12 +447,15 @@ try {
                     payment_status = 'NONE',
                     overall_remark = 'Refund',
                     is_completed = 1,
+                    completed_by = COALESCE(completed_by, :comp_uid),
+                    completed_at = COALESCE(completed_at, NOW()),
                     updated_by = :uid,
                     updated_at = NOW()
                 WHERE id = :id
             ");
             $upd->execute([
                 ':ref' => $refund_reference,
+                ':comp_uid' => $user['id'],
                 ':uid' => $user['id'],
                 ':id' => $rec['id']
             ]);

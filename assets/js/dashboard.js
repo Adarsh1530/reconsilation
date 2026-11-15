@@ -193,7 +193,7 @@ function loadSessionRecords() {
     if (tableBody) {
         tableBody.innerHTML = `
             <tr>
-                <td colspan="4" style="text-align:center; padding: 40px; color: var(--text-muted);">
+                <td colspan="5" style="text-align:center; padding: 40px; color: var(--text-muted);">
                     <div style="display:inline-block; animation: spin 1s linear infinite; margin-bottom: 8px;">⏳</div>
                     <div>Loading ${getSessionDisplayName(currentSession)} records...</div>
                 </td>
@@ -201,7 +201,9 @@ function loadSessionRecords() {
         `;
     }
 
-    fetch(`api/reconciliation.php?action=get_records&date=${encodeURIComponent(currentDate)}&session=${encodeURIComponent(currentSession)}`)
+    fetch(`api/reconciliation.php?action=get_records&date=${encodeURIComponent(currentDate)}&session=${encodeURIComponent(currentSession)}&_t=${Date.now()}`, {
+        cache: 'no-store'
+    })
         .then(res => res.json())
         .then(res => {
             if (res.success) {
@@ -378,37 +380,35 @@ function renderMainTable(records) {
         ].filter(Boolean).join(' ');
 
         // Status badge & remark text
-        let badgeClass = 'badge-pending';
-        let remarkText = 'Pending';
-        let tooltipText = '';
+        const hasCustomRemark = rec.custom_remark && rec.custom_remark.trim() !== '';
+        let remarkHtml = '';
 
-        if (rec.is_completed == 1) {
-            badgeClass = 'badge-completed';
-            remarkText = 'Completed';
-            if (rec.custom_remark) {
-                tooltipText = 'Remark: ' + rec.custom_remark;
-            }
+        if (isEscalatedOpen) {
+            remarkHtml = `<span class="status-badge badge-urgent-cases" title="Urgent Case: Issue count exceeds 10 - Escalated to Admin & Super Admin Panel">Urgent Cases</span>`;
         } else if (isResolved) {
-            badgeClass = 'badge-completed';
-            remarkText = 'Resolved';
-            tooltipText = rec.overall_remark || ('Resolved by ' + (rec.urgent_resolved_by_user || 'Admin'));
-        } else if (isEscalatedOpen) {
-            badgeClass = 'badge-urgent-cases';
-            remarkText = 'Urgent Cases';
-            tooltipText = 'Urgent Case: Issue count exceeds 10 - Escalated to Admin & Super Admin Panel';
+            const resTooltip = rec.overall_remark || ('Resolved by ' + (rec.urgent_resolved_by_user || 'Admin'));
+            remarkHtml = `<span class="status-badge badge-completed" title="${escapeHtml(resTooltip)}">Resolved</span>`;
+        } else if (rec.payment_status === 'PAYMENT_SUCCESS' && hasCustomRemark) {
+            remarkHtml = `
+                <span class="status-badge badge-payment-success">Payment Success</span>
+                <span class="status-badge badge-completed" style="max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="Remark: ${escapeHtml(rec.custom_remark)}">💬 ${escapeHtml(rec.custom_remark)}</span>
+            `;
+        } else if (rec.payment_status === 'NO_PAYMENT' && hasCustomRemark) {
+            remarkHtml = `
+                <span class="status-badge badge-no-payment">No Payment</span>
+                <span class="status-badge badge-pending" style="max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="Remark: ${escapeHtml(rec.custom_remark)}">💬 ${escapeHtml(rec.custom_remark)}</span>
+            `;
         } else if (rec.payment_status === 'PAYMENT_SUCCESS') {
-            badgeClass = 'badge-payment-success';
-            remarkText = 'Payment Success';
+            remarkHtml = `<span class="status-badge badge-payment-success">Payment Success</span>`;
         } else if (rec.payment_status === 'NO_PAYMENT') {
-            badgeClass = 'badge-no-payment';
-            remarkText = 'No Payment';
-        } else if (rec.custom_remark && rec.custom_remark.trim() !== '') {
-            badgeClass = 'badge-pending';
-            remarkText = 'Pending';
-            tooltipText = 'Remark: ' + rec.custom_remark;
+            remarkHtml = `<span class="status-badge badge-no-payment">No Payment</span>`;
+        } else if (hasCustomRemark) {
+            const bCls = rec.is_completed == 1 ? 'badge-completed' : 'badge-pending';
+            remarkHtml = `<span class="status-badge ${bCls}" style="max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="Remark: ${escapeHtml(rec.custom_remark)}">💬 ${escapeHtml(rec.custom_remark)}</span>`;
+        } else if (rec.is_completed == 1) {
+            remarkHtml = `<span class="status-badge badge-completed">Completed</span>`;
         } else {
-            badgeClass = 'badge-pending';
-            remarkText = 'Pending';
+            remarkHtml = `<span class="status-badge badge-pending">Pending</span>`;
         }
 
         // Reconciliation column display: overview of number only
@@ -478,16 +478,6 @@ function renderMainTable(records) {
             `;
         }
 
-        // Custom remark inline pill (strictly on the same horizontal line)
-        let customRemarkHtml = '';
-        if (rec.custom_remark && rec.custom_remark.trim() !== '') {
-            customRemarkHtml = `
-                <span class="custom-remark-pill" title="Remark: ${escapeHtml(rec.custom_remark)}${rec.updated_by_user ? ` (by ${escapeHtml(rec.updated_by_user)})` : ''}" style="font-size: 11.5px; color: #4338ca; font-weight: 600; background: #eef2ff; border: 1px solid #c7d2fe; padding: 3px 8px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; max-width: 140px; overflow: hidden; text-overflow: ellipsis; vertical-align: middle;">
-                    💬 ${escapeHtml(rec.custom_remark)}
-                </span>
-            `;
-        }
-
         // Dedicated Duplicate Receipt column display: overview of number only
         let dupDisplay = '<span style="color: #94a3b8; font-size: 12.5px; white-space: nowrap;">None</span>';
         if (rec.duplicate_receipt_no && rec.duplicate_receipt_no.trim() !== '') {
@@ -526,9 +516,6 @@ function renderMainTable(records) {
             `;
         }
 
-        const authorTooltip = rec.updated_by_user ? `Updated by ${escapeHtml(rec.updated_by_user)}` : '';
-        const finalTooltip = [tooltipText, authorTooltip].filter(Boolean).join(' | ');
-
         html += `
             <tr class="${rowClasses}" id="school-row-${rec.school_id}">
                 <td>
@@ -545,9 +532,7 @@ function renderMainTable(records) {
                 <td>
                     <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; white-space: nowrap;">
                         <div style="display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; white-space: nowrap;">
-                            <span class="status-badge ${badgeClass}" ${finalTooltip ? `title="${escapeHtml(finalTooltip)}"` : ''}>
-                                ${escapeHtml(remarkText)}
-                            </span>
+                            ${remarkHtml}
                         </div>
                         <div style="display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; white-space: nowrap;">
                             ${completionTrackingHtml}
@@ -1261,15 +1246,29 @@ function postReconAction(actionName, data, loadingMsg = 'Processing...') {
         formData.append(key, data[key]);
     }
 
-    fetch(`api/reconciliation.php?action=${actionName}`, {
+    fetch(`api/reconciliation.php?action=${actionName}&_t=${Date.now()}`, {
         method: 'POST',
-        body: formData
+        body: formData,
+        cache: 'no-store'
     })
     .then(res => res.json())
     .then(res => {
         if (res.success) {
             showToast('success', 'Saved', res.message);
-            // Refresh records and update workspace
+            // Optimistic instant in-memory update to immediately reflect on table overview
+            if (res.record && recordsCache && data.school_id) {
+                const targetId = parseInt(data.school_id, 10);
+                const idx = recordsCache.findIndex(r => parseInt(r.school_id, 10) === targetId);
+                if (idx !== -1) {
+                    recordsCache[idx] = Object.assign({}, recordsCache[idx], res.record);
+                    if (res.summary) {
+                        renderOverviewCards(res.summary);
+                    }
+                    renderMainTable(recordsCache);
+                    renderWorkspace(recordsCache[idx]);
+                }
+            }
+            // Fresh network reload with cache-busting to ensure complete DB parity
             loadSessionRecords();
             unlockWorkspace();
         } else {
