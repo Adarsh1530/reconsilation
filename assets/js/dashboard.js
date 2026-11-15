@@ -467,14 +467,14 @@ function renderMainTable(records) {
         let erpLoginBtn = '';
         if (rec.erp_url) {
             erpLoginBtn = `
-                <a href="erp_launch.php?school_id=${rec.school_id}" target="_blank" class="btn-erp-login" onclick="copyPasswordOnDirectClick('${escapeHtml(rec.erp_password || '')}')" title="Auto-login to ERP Online Payment: ${escapeHtml(rec.school_name)}">
+                <button type="button" class="btn-erp-login" onclick="openErpPortal(${rec.school_id}, event)" title="Auto-login directly to Online Payment: ${escapeHtml(rec.school_name)}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
                         <polyline points="15 3 21 3 21 9"></polyline>
                         <line x1="10" y1="14" x2="21" y2="3"></line>
                     </svg>
                     <span>ERP Login</span>
-                </a>
+                </button>
             `;
         }
 
@@ -619,6 +619,30 @@ window.openErpPortal = function(schoolId) {
         setTimeout(() => {
             form.submit();
         }, 800);
+
+        // Step 3: Ensure landing directly on the exact Fees Collection Online Payment link once authenticated
+        setTimeout(() => {
+            try {
+                if (erpWin && !erpWin.closed) {
+                    erpWin.location.href = rec.erp_url;
+                } else {
+                    window.open(rec.erp_url, winName);
+                }
+            } catch (e) {
+                window.open(rec.erp_url, winName);
+            }
+        }, 2200);
+
+        // Safeguard retry at 4200ms
+        setTimeout(() => {
+            try {
+                if (erpWin && !erpWin.closed) {
+                    erpWin.location.href = rec.erp_url;
+                }
+            } catch (e) {
+                // Ignore cross-origin access errors
+            }
+        }, 4200);
     }
 };
 
@@ -686,9 +710,9 @@ function renderWorkspace(rec) {
     if (wsErpBtn) {
         if (rec.erp_url) {
             wsErpBtn.style.display = 'inline-flex';
-            wsErpBtn.href = 'erp_launch.php?school_id=' + rec.school_id;
-            wsErpBtn.onclick = () => {
-                copyPasswordOnDirectClick(rec.erp_password || '');
+            wsErpBtn.onclick = (e) => {
+                if (e) e.preventDefault();
+                openErpPortal(rec.school_id);
             };
         } else {
             wsErpBtn.style.display = 'none';

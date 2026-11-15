@@ -307,21 +307,18 @@ log_activity('ERP_DIRECT_LAUNCH', "Auto-launched ERP Online Payment gateway for 
         </div>
     </div>
 
-    <!-- Hidden iframe pre-visits target URL to register returnUrl in AMS ERP session -->
-    <iframe id="prepIframe" src="<?= e($target_url) ?>" style="position: absolute; width: 1px; height: 1px; left: -9999px; opacity: 0.01;" onload="onPrepLoaded()"></iframe>
-
     <!-- Auto-login form submitting to ERP login endpoint -->
-    <form id="erpLoginForm" action="<?= e($login_url) ?>" method="POST" target="_self">
+    <form id="erpLoginForm" action="<?= e($login_url) ?>" method="POST" target="_blank">
         <input type="hidden" name="UserLogin[username]" value="<?= e($username) ?>">
         <input type="hidden" name="UserLogin[password]" value="<?= e($password) ?>">
         <input type="hidden" name="yt0" value="Sign in ">
     </form>
 
     <div class="action-buttons-group">
-        <button type="button" class="btn-direct-submit" id="btnAutoLogin" onclick="submitLoginNow()">
-            <span>🚀 Click here if not redirected automatically</span>
+        <button type="button" class="btn-direct-submit" id="btnAutoLogin" onclick="launchGatewayNow()">
+            <span>🚀 Click here to Enter ERP Online Payment</span>
         </button>
-        <a href="<?= e($target_url) ?>" class="btn-direct-url" onclick="copyPasswordOnDirectClick('<?= e($password) ?>')">
+        <a href="<?= e($target_url) ?>" target="_blank" class="btn-direct-url" onclick="copyPasswordOnDirectClick('<?= e($password) ?>')">
             <span>🔗 Open <?= e($target_url) ?> Directly</span>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
@@ -333,10 +330,12 @@ log_activity('ERP_DIRECT_LAUNCH', "Auto-launched ERP Online Payment gateway for 
 </div>
 
 <script>
+const schoolId = <?= json_encode($school_id) ?>;
+const targetUrl = <?= json_encode($target_url) ?>;
 const password = <?= json_encode($password) ?>;
 let autoSubmitted = false;
 
-function submitLoginNow() {
+function launchGatewayNow() {
     if (autoSubmitted) return;
     autoSubmitted = true;
 
@@ -349,16 +348,39 @@ function submitLoginNow() {
         statusEl.textContent = 'Authenticated! Landing on Online Payment...';
     }
 
-    document.getElementById('erpLoginForm').submit();
+    const winName = 'amserp_tab_' + schoolId;
+    const erpWin = window.open(targetUrl, winName);
+
+    const form = document.getElementById('erpLoginForm');
+    form.target = winName;
+
+    setTimeout(() => {
+        form.submit();
+    }, 700);
+
+    setTimeout(() => {
+        try {
+            if (erpWin && !erpWin.closed) {
+                erpWin.location.href = targetUrl;
+            } else {
+                window.open(targetUrl, winName);
+            }
+        } catch (e) {
+            window.open(targetUrl, winName);
+        }
+    }, 2200);
+
+    setTimeout(() => {
+        try {
+            if (erpWin && !erpWin.closed) {
+                erpWin.location.href = targetUrl;
+            }
+        } catch (e) {}
+    }, 4200);
 }
 
-function onPrepLoaded() {
-    // Iframe has pre-visited target URL, session returnUrl is set in AMS ERP
-    setTimeout(submitLoginNow, 350);
-}
-
-// Fallback timer: submit login form after 1.4s regardless of iframe state
-setTimeout(submitLoginNow, 1400);
+// Auto-launch gateway
+setTimeout(launchGatewayNow, 500);
 
 function copyPasswordOnDirectClick(pw) {
     if (navigator.clipboard) {

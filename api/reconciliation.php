@@ -64,6 +64,7 @@ try {
                     s.phone,
                     s.email,
                     s.erp_url,
+                    s.erp_login_url,
                     s.erp_username,
                     s.erp_password,
                     r.id AS record_id,
