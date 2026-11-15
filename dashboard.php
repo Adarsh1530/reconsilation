@@ -181,16 +181,11 @@ include __DIR__ . '/includes/header.php';
                     <input type="text" id="wsIssueInput" class="form-control" placeholder="Enter issue reference (e.g. REF102, 123)" autocomplete="off">
                     <div id="wsIssueWarning" class="input-warning-msg"></div>
                 </div>
-                <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 6px;">
+                <div style="display: flex; align-items: center; margin-top: 6px;">
                     <label style="font-size: 12px; color: #b91c1c; font-weight: 600; display: flex; align-items: center; gap: 6px; cursor: pointer;">
                         <input type="checkbox" id="wsUrgentCheck">
                         <span>Flag as Urgent Case</span>
                     </label>
-                    <select id="wsUrgentPriority" style="font-size: 11px; padding: 2px 6px; border-radius: 4px; border: 1px solid #fecaca; background: #fff5f5; color: #b91c1c;">
-                        <option value="High">High Priority</option>
-                        <option value="Critical">Critical Priority</option>
-                        <option value="Medium">Medium Priority</option>
-                    </select>
                 </div>
             </div>
 
