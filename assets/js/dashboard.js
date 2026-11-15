@@ -570,14 +570,14 @@ function renderMainTable(records) {
                 <td>${refundDisplay}</td>
                 <td>${dupDisplay}</td>
                 <td>
-                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; white-space: nowrap;">
-                        <div style="display: inline-flex; align-items: center; gap: 8px; flex-shrink: 0; white-space: nowrap;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; white-space: nowrap;">
+                        <div style="display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; white-space: nowrap;">
                             <span class="status-badge ${badgeClass}" ${finalTooltip ? `title="${escapeHtml(finalTooltip)}"` : ''}>
                                 ${escapeHtml(remarkText)}
                             </span>
                             ${customRemarkHtml}
                         </div>
-                        <div style="display: inline-flex; align-items: center; gap: 8px; flex-shrink: 0; white-space: nowrap;">
+                        <div style="display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; white-space: nowrap;">
                             ${completionTrackingHtml}
                             ${actionBtn}
                         </div>

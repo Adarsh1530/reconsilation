@@ -277,11 +277,11 @@ include __DIR__ . '/includes/header.php';
         <table class="data-table">
             <thead>
                 <tr>
-                    <th style="width: 20%;">School Name</th>
-                    <th style="width: 14%;">Reconciliation</th>
-                    <th style="width: 9%;">Refund</th>
-                    <th style="width: 12%;">Duplicate</th>
-                    <th style="width: 45%;">Remark</th>
+                    <th>School Name</th>
+                    <th>Reconciliation</th>
+                    <th>Refund</th>
+                    <th>Duplicate</th>
+                    <th>Remark</th>
                 </tr>
             </thead>
             <tbody id="reconciliationTableBody">
