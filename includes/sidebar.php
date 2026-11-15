@@ -49,6 +49,18 @@ if (has_permission('access_urgent_cases')) {
             <span>Reconciliation</span>
         </a>
 
+        <!-- Monthly Report (Available for ALL roles) -->
+        <a href="monthly_report.php" class="nav-link <?= ($current_page === 'monthly_report.php') ? 'active' : '' ?>">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+                <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+            <span>Monthly Report</span>
+        </a>
+
         <!-- Urgent Cases (Admin & Super Admin) -->
         <?php if (has_permission('access_urgent_cases')): ?>
         <a href="urgent_cases.php" class="nav-link <?= ($current_page === 'urgent_cases.php') ? 'active' : '' ?>">

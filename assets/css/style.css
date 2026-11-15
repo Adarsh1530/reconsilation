@@ -1096,3 +1096,250 @@ body {
         display: none;
     }
 }
+
+/* ==========================================================================
+   MONTHLY RECONCILIATION REPORT MATRIX & PRINT STYLES
+   ========================================================================== */
+.report-matrix-wrapper {
+    background: #ffffff;
+    max-height: calc(100vh - 310px);
+    overflow-y: auto;
+}
+
+.report-matrix-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 12px;
+}
+
+.report-matrix-table th {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: #1e3a8a;
+    color: #ffffff;
+    padding: 10px 8px;
+    font-weight: 700;
+    text-align: center;
+    border-bottom: 2px solid #0f172a;
+    border-right: 1px solid rgba(255, 255, 255, 0.15);
+    white-space: nowrap;
+}
+
+.report-matrix-table th.school-col-header {
+    left: 0;
+    z-index: 30;
+    text-align: left;
+    min-width: 200px;
+    width: 220px;
+    padding-left: 16px;
+    background: #0f172a;
+    box-shadow: 2px 0 6px rgba(0,0,0,0.15);
+}
+
+.report-matrix-table th.day-header {
+    min-width: 160px;
+    width: 175px;
+}
+
+.report-matrix-table th.day-header.is-today {
+    background: #2563eb;
+    border-top: 3px solid #f59e0b;
+}
+
+.report-matrix-table th.day-header.is-weekend {
+    background: #1e293b;
+}
+
+.report-matrix-table td.school-cell {
+    position: sticky;
+    left: 0;
+    z-index: 10;
+    background: #f8fafc;
+    border-right: 2px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+    padding: 12px 16px;
+    font-weight: 700;
+    color: var(--text-main);
+    box-shadow: 2px 0 6px rgba(0,0,0,0.05);
+}
+
+.report-matrix-table td.data-cell {
+    padding: 10px 12px;
+    border-right: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+    vertical-align: top;
+    background: #ffffff;
+    transition: background 0.12s ease-in-out;
+    cursor: pointer;
+}
+
+.report-matrix-table tr:hover td.data-cell {
+    background: #fcfdfe;
+}
+
+.report-matrix-table td.data-cell:hover {
+    background: #f0fdf4 !important;
+    outline: 2px solid #22c55e;
+    outline-offset: -2px;
+}
+
+.report-matrix-table td.data-cell.cell-empty {
+    text-align: center;
+    color: #cbd5e1;
+    cursor: default;
+}
+
+.report-matrix-table td.data-cell.cell-empty:hover {
+    background: #f8fafc !important;
+    outline: none;
+}
+
+/* Card inner lines */
+.cell-block {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    line-height: 1.4;
+}
+
+.cell-row-user {
+    font-weight: 700;
+    color: #0f172a;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.cell-row-time {
+    font-size: 11px;
+    color: #64748b;
+    margin-bottom: 2px;
+}
+
+.cell-row-pills {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+    margin: 2px 0;
+}
+
+.pill-status {
+    font-size: 10.5px;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 4px;
+    letter-spacing: 0.3px;
+}
+
+.pill-status.status-nil {
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fde68a;
+}
+
+.pill-status.status-ps {
+    background: #dcfce7;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+}
+
+.cell-row-item {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.cell-row-item strong {
+    color: var(--text-main);
+}
+
+.cell-row-recon {
+    color: #dc2626;
+    font-family: var(--font-mono, monospace);
+    font-weight: 700;
+}
+
+.cell-row-refund {
+    color: #ea580c;
+    font-family: var(--font-mono, monospace);
+    font-weight: 600;
+}
+
+.cell-row-dup {
+    color: #0284c7;
+    font-family: var(--font-mono, monospace);
+    font-weight: 600;
+}
+
+/* Print / Landscape PDF Output Styles */
+@media print {
+    @page {
+        size: landscape;
+        margin: 6mm 6mm 6mm 6mm;
+    }
+
+    body {
+        background: #ffffff !important;
+        color: #000000 !important;
+        font-size: 8pt !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    .app-sidebar,
+    .app-header,
+    .report-header-wrapper,
+    .stats-grid,
+    .card-header,
+    .modal-backdrop,
+    #toastContainer {
+        display: none !important;
+    }
+
+    .app-main {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .content-wrapper {
+        padding: 0 !important;
+    }
+
+    .table-card {
+        box-shadow: none !important;
+        border: none !important;
+    }
+
+    .print-only {
+        display: block !important;
+    }
+
+    .report-matrix-wrapper {
+        max-height: none !important;
+        overflow: visible !important;
+    }
+
+    .report-matrix-table {
+        font-size: 7.5pt !important;
+    }
+
+    .report-matrix-table th,
+    .report-matrix-table td {
+        position: static !important;
+        box-shadow: none !important;
+        border: 1px solid #94a3b8 !important;
+        padding: 4px 6px !important;
+    }
+
+    .report-matrix-table th {
+        background: #1e3a8a !important;
+        color: #ffffff !important;
+    }
+
+    .report-matrix-table td.school-cell {
+        background: #f1f5f9 !important;
+    }
+}
