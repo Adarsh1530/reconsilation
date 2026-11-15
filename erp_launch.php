@@ -2,7 +2,7 @@
 /**
  * ERP Automated Login & Direct Link Gateway
  * School Reconciliation Management System
- * Guarantees landing on the exact Fees Collection Online Payment link:
+ * Automatically logs in and lands directly on the Fees Collection Online Payment link:
  * - Blue Mount: https://bluemount.amserp.in/index.php/core/feescollection/onlinepayment
  * - BVB Poochatty: https://bvbpoochatty.amserp.in/index.php/core/feescollection/onlinepayment
  */
@@ -26,13 +26,17 @@ if (!$school) {
     die("Error: School record not found.");
 }
 
-// Exact required URLs
 $target_url = $school['erp_url'];
-$login_url = !empty($school['erp_login_url']) ? $school['erp_login_url'] : 'https://bluemount.amserp.in/index.php/user/login';
+$login_url = !empty($school['erp_login_url']) ? $school['erp_login_url'] : '';
+if (empty($login_url) && !empty($target_url)) {
+    $parsed = parse_url($target_url);
+    $login_url = ($parsed['scheme'] ?? 'https') . '://' . ($parsed['host'] ?? '') . '/index.php/user/login';
+}
+
 $username = $school['erp_username'];
 $password = $school['erp_password'];
 
-log_activity('ERP_DIRECT_LAUNCH', "Accessed ERP Fees Collection gateway for {$school['name']}");
+log_activity('ERP_DIRECT_LAUNCH', "Auto-launched ERP Online Payment gateway for {$school['name']}");
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -124,9 +128,6 @@ log_activity('ERP_DIRECT_LAUNCH', "Accessed ERP Fees Collection gateway for {$sc
             display: block;
             text-decoration: none;
             font-weight: 600;
-        }
-        .target-url-link:hover {
-            text-decoration: underline;
         }
         .spinner-wrapper {
             position: relative;
@@ -274,11 +275,11 @@ log_activity('ERP_DIRECT_LAUNCH', "Accessed ERP Fees Collection gateway for {$sc
 <div class="gateway-card">
     <div class="school-badge"><?= e($school['code']) ?></div>
     <h1 class="school-title"><?= e($school['name']) ?></h1>
-    <p class="portal-subtext">Automated ERP Fees Collection Portal Gateway</p>
+    <p class="portal-subtext">Direct ERP Fees Collection Portal Gateway</p>
 
     <div class="target-url-box">
         <div class="target-url-label">🎯 Destination Target Link</div>
-        <a href="<?= e($target_url) ?>" class="target-url-link" target="_blank" id="directTargetLink">
+        <a href="<?= e($target_url) ?>" class="target-url-link" id="directTargetLink">
             <?= e($target_url) ?>
         </a>
     </div>
@@ -290,7 +291,7 @@ log_activity('ERP_DIRECT_LAUNCH', "Accessed ERP Fees Collection gateway for {$sc
 
     <div class="status-pill">
         <span class="status-dot"></span>
-        <span id="statusLabel">Preparing direct authentication...</span>
+        <span id="statusLabel">Authenticating and loading Online Payment...</span>
     </div>
 
     <div class="credentials-card">
@@ -306,18 +307,21 @@ log_activity('ERP_DIRECT_LAUNCH', "Accessed ERP Fees Collection gateway for {$sc
         </div>
     </div>
 
-    <!-- Hidden form that authenticates and posts to ERP login -->
-    <form id="erpLoginForm" action="<?= e($login_url) ?>" method="POST" target="amserp_target_win">
+    <!-- Hidden iframe pre-visits target URL to register returnUrl in AMS ERP session -->
+    <iframe id="prepIframe" src="<?= e($target_url) ?>" style="position: absolute; width: 1px; height: 1px; left: -9999px; opacity: 0.01;" onload="onPrepLoaded()"></iframe>
+
+    <!-- Auto-login form submitting to ERP login endpoint -->
+    <form id="erpLoginForm" action="<?= e($login_url) ?>" method="POST" target="_self">
         <input type="hidden" name="UserLogin[username]" value="<?= e($username) ?>">
         <input type="hidden" name="UserLogin[password]" value="<?= e($password) ?>">
         <input type="hidden" name="yt0" value="Sign in ">
     </form>
 
     <div class="action-buttons-group">
-        <button type="button" class="btn-direct-submit" id="btnAutoLogin" onclick="launchFeesCollection()">
-            <span>🚀 Open & Sign In to Online Payment (Exact Link)</span>
+        <button type="button" class="btn-direct-submit" id="btnAutoLogin" onclick="submitLoginNow()">
+            <span>🚀 Click here if not redirected automatically</span>
         </button>
-        <a href="<?= e($target_url) ?>" class="btn-direct-url" target="_blank" onclick="copyPasswordOnDirectClick('<?= e($password) ?>')">
+        <a href="<?= e($target_url) ?>" class="btn-direct-url" onclick="copyPasswordOnDirectClick('<?= e($password) ?>')">
             <span>🔗 Open <?= e($target_url) ?> Directly</span>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
@@ -329,31 +333,32 @@ log_activity('ERP_DIRECT_LAUNCH', "Accessed ERP Fees Collection gateway for {$sc
 </div>
 
 <script>
-const targetUrl = <?= json_encode($target_url) ?>;
 const password = <?= json_encode($password) ?>;
-let hasExecuted = false;
+let autoSubmitted = false;
 
-function launchFeesCollection() {
-    if (hasExecuted) return;
-    hasExecuted = true;
+function submitLoginNow() {
+    if (autoSubmitted) return;
+    autoSubmitted = true;
 
-    // Copy password to clipboard as helpful backup
     if (navigator.clipboard) {
         navigator.clipboard.writeText(password).catch(() => {});
     }
 
-    document.getElementById('statusLabel').textContent = 'Opening Online Fees Collection in new tab...';
+    const statusEl = document.getElementById('statusLabel');
+    if (statusEl) {
+        statusEl.textContent = 'Authenticated! Landing on Online Payment...';
+    }
 
-    // Step 1: Open the exact target URL in a named window
-    const win = window.open(targetUrl, 'amserp_target_win');
-
-    // Step 2: Auto-submit credentials to login endpoint targeting that same window
-    // so AMS ERP registers the returnUrl and lands straight on the fees collection page!
-    setTimeout(() => {
-        document.getElementById('erpLoginForm').submit();
-        document.getElementById('statusLabel').textContent = 'Authenticated! Online Payment page loaded.';
-    }, 800);
+    document.getElementById('erpLoginForm').submit();
 }
+
+function onPrepLoaded() {
+    // Iframe has pre-visited target URL, session returnUrl is set in AMS ERP
+    setTimeout(submitLoginNow, 350);
+}
+
+// Fallback timer: submit login form after 1.4s regardless of iframe state
+setTimeout(submitLoginNow, 1400);
 
 function copyPasswordOnDirectClick(pw) {
     if (navigator.clipboard) {
@@ -376,11 +381,6 @@ function copyText(text, btn) {
         });
     }
 }
-
-// Auto-trigger on page load
-window.addEventListener('DOMContentLoaded', () => {
-    setTimeout(launchFeesCollection, 400);
-});
 </script>
 
 </body>

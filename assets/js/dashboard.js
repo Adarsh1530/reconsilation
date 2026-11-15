@@ -467,7 +467,7 @@ function renderMainTable(records) {
         let erpLoginBtn = '';
         if (rec.erp_url) {
             erpLoginBtn = `
-                <a href="${escapeHtml(rec.erp_url)}" target="_blank" class="btn-erp-login" onclick="copyPasswordOnDirectClick('${escapeHtml(rec.erp_password || '')}')" title="Open exact link: ${escapeHtml(rec.erp_url)}">
+                <a href="erp_launch.php?school_id=${rec.school_id}" target="_blank" class="btn-erp-login" onclick="copyPasswordOnDirectClick('${escapeHtml(rec.erp_password || '')}')" title="Auto-login to ERP Online Payment: ${escapeHtml(rec.school_name)}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
                         <polyline points="15 3 21 3 21 9"></polyline>
@@ -686,7 +686,7 @@ function renderWorkspace(rec) {
     if (wsErpBtn) {
         if (rec.erp_url) {
             wsErpBtn.style.display = 'inline-flex';
-            wsErpBtn.href = rec.erp_url;
+            wsErpBtn.href = 'erp_launch.php?school_id=' + rec.school_id;
             wsErpBtn.onclick = () => {
                 copyPasswordOnDirectClick(rec.erp_password || '');
             };
