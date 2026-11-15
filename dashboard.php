@@ -51,7 +51,16 @@ include __DIR__ . '/includes/header.php';
         </div>
     </div>
 
-    <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+    <!-- Active Selection Highlight (Selected Session & Date Display) -->
+    <div class="active-selection-highlight-badge" id="activeSelectionHighlightBadge" title="Currently Selected Session and Working Date">
+        <span class="highlight-badge-icon">📌</span>
+        <span class="highlight-badge-label">Selected:</span>
+        <span class="highlight-badge-session <?= ($active_session === 'PM') ? 'evening' : '' ?>" id="highlightSessionText"><?= ($active_session === 'AM') ? 'Morning Session' : 'Evening Session' ?></span>
+        <span class="highlight-badge-divider">•</span>
+        <span class="highlight-badge-date" id="highlightDateText"><?= date('d.m.Y', strtotime($working_date)) ?></span>
+    </div>
+
+    <div class="session-bar-right-tools">
         <div class="date-picker-group">
             <label for="workingDateInput">Working Date:</label>
             <input type="date" id="workingDateInput" class="date-input" value="<?= e($working_date) ?>" max="<?= date('Y-m-d') ?>">

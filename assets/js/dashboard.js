@@ -32,6 +32,7 @@ function initDashboard() {
             currentDate = todayStr;
             dateInput.value = todayStr;
         }
+        updateHighlightBadge(currentSession, currentDate);
         dateInput.addEventListener('change', (e) => {
             if (e.target.value > todayStr) {
                 showToast('warning', 'Future Date Not Allowed', 'Future dates cannot be selected. Setting to today.');
@@ -40,6 +41,7 @@ function initDashboard() {
             } else {
                 currentDate = e.target.value;
             }
+            updateHighlightBadge(currentSession, currentDate);
             loadSessionRecords();
         });
     }
@@ -152,8 +154,35 @@ function switchSession(newSession) {
         }
     }
 
+    // Update active highlight badge
+    updateHighlightBadge(newSession, currentDate);
+
     showToast('info', 'Session Switched', `Loaded ${getSessionDisplayName(newSession)} records for ${currentDate}.`);
     loadSessionRecords();
+}
+
+/**
+ * Update Selected Session & Date Highlight Badge
+ */
+function updateHighlightBadge(session, dateStr) {
+    const hlSession = document.getElementById('highlightSessionText');
+    const hlDate = document.getElementById('highlightDateText');
+    if (hlSession) {
+        hlSession.textContent = getSessionDisplayName(session);
+        if (session === 'PM') {
+            hlSession.classList.add('evening');
+        } else {
+            hlSession.classList.remove('evening');
+        }
+    }
+    if (hlDate && dateStr) {
+        const parts = dateStr.split('-');
+        if (parts.length === 3) {
+            hlDate.textContent = `${parts[2]}.${parts[1]}.${parts[0]}`;
+        } else {
+            hlDate.textContent = dateStr;
+        }
+    }
 }
 
 /**
