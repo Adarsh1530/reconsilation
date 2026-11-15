@@ -352,7 +352,7 @@ function renderMainTable(records) {
     if (!records || records.length === 0) {
         tableBody.innerHTML = `
             <tr>
-                <td colspan="4" style="text-align: center; padding: 30px; color: var(--text-muted);">
+                <td colspan="5" style="text-align: center; padding: 30px; color: var(--text-muted);">
                     No active schools found in the database.
                 </td>
             </tr>
@@ -510,13 +510,15 @@ function renderMainTable(records) {
             `;
         }
 
-        // Duplicate receipt badge if recorded
-        let dupReceiptBadgeHtml = '';
+        // Dedicated Duplicate Receipt column display (strictly one line)
+        let dupDisplay = '<span style="color: #94a3b8; font-size: 12.5px; white-space: nowrap;">None</span>';
         if (rec.duplicate_receipt_no && rec.duplicate_receipt_no.trim() !== '') {
-            dupReceiptBadgeHtml = `
-                <span class="badge-dup-receipt" title="Duplicate Receipt: ${escapeHtml(rec.duplicate_receipt_no)}${rec.duplicate_receipt_desc ? ` - ${escapeHtml(rec.duplicate_receipt_desc)}` : ''}">
-                    📄 Dup: ${escapeHtml(rec.duplicate_receipt_no)}
-                </span>
+            const desc = rec.duplicate_receipt_desc ? ` - ${escapeHtml(rec.duplicate_receipt_desc)}` : '';
+            dupDisplay = `
+                <div style="display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;" title="Duplicate Receipt: ${escapeHtml(rec.duplicate_receipt_no)}${desc}">
+                    <span class="status-badge badge-dup-receipt">📄 Dup</span>
+                    <strong style="font-family: monospace; font-size: 12px; color: #0284c7;">${escapeHtml(rec.duplicate_receipt_no)}</strong>
+                </div>
             `;
         }
 
@@ -566,13 +568,13 @@ function renderMainTable(records) {
                 </td>
                 <td>${reconDisplay}</td>
                 <td>${refundDisplay}</td>
+                <td>${dupDisplay}</td>
                 <td>
                     <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; white-space: nowrap;">
                         <div style="display: inline-flex; align-items: center; gap: 8px; flex-shrink: 0; white-space: nowrap;">
                             <span class="status-badge ${badgeClass}" ${finalTooltip ? `title="${escapeHtml(finalTooltip)}"` : ''}>
                                 ${escapeHtml(remarkText)}
                             </span>
-                            ${dupReceiptBadgeHtml}
                             ${customRemarkHtml}
                         </div>
                         <div style="display: inline-flex; align-items: center; gap: 8px; flex-shrink: 0; white-space: nowrap;">
