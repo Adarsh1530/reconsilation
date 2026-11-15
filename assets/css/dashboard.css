@@ -12,18 +12,30 @@
     justify-content: space-between;
     background: #ffffff;
     border-radius: var(--radius-xl);
-    padding: 16px 24px;
+    padding: 12px 20px;
     border: 1px solid var(--border-color);
     box-shadow: var(--shadow-sm);
     margin-bottom: 24px;
-    gap: 16px;
-    flex-wrap: wrap;
+    gap: 12px;
+}
+
+@media (min-width: 1024px) {
+    .session-control-bar {
+        flex-wrap: nowrap;
+    }
+}
+
+@media (max-width: 1023px) {
+    .session-control-bar {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
 }
 
 .session-toggle-wrapper {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     flex-shrink: 0;
 }
 
@@ -33,16 +45,16 @@
     align-items: center;
     gap: 8px;
     background: linear-gradient(135deg, #eff6ff 0%, #eef2ff 100%);
-    border: 2px solid #6366f1;
+    border: 1.5px solid #6366f1;
     border-radius: var(--radius-lg);
-    padding: 6px 16px;
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+    padding: 5px 14px;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.12);
     white-space: nowrap;
-    animation: fadeIn 0.25s ease-out;
+    flex-shrink: 0;
 }
 
 .highlight-badge-icon {
-    font-size: 15px;
+    font-size: 14px;
     display: inline-flex;
     align-items: center;
 }
@@ -52,40 +64,40 @@
     font-weight: 800;
     color: #4338ca;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.04em;
 }
 
 .highlight-badge-session {
-    font-size: 12.5px;
+    font-size: 12px;
     font-weight: 800;
     color: #ffffff;
     background: #2563eb;
-    padding: 4px 10px;
-    border-radius: 6px;
+    padding: 3px 9px;
+    border-radius: 5px;
     letter-spacing: 0.01em;
-    transition: all 0.2s ease;
-    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+    transition: background 0.2s ease;
+    box-shadow: 0 1px 4px rgba(37, 99, 235, 0.2);
 }
 
 .highlight-badge-session.evening {
     background: #7c3aed !important;
-    box-shadow: 0 2px 6px rgba(124, 58, 237, 0.25) !important;
+    box-shadow: 0 1px 4px rgba(124, 58, 237, 0.2) !important;
 }
 
 .highlight-badge-divider {
     color: #818cf8;
     font-weight: 800;
-    font-size: 14px;
+    font-size: 13px;
 }
 
 .highlight-badge-date {
-    font-size: 12.5px;
+    font-size: 12px;
     font-weight: 800;
     color: #1e3a8a;
     background: #ffffff;
-    border: 1.5px solid #a5b4fc;
-    padding: 3px 10px;
-    border-radius: 6px;
+    border: 1px solid #a5b4fc;
+    padding: 3px 9px;
+    border-radius: 5px;
     font-family: monospace, sans-serif;
     letter-spacing: 0.02em;
 }
@@ -93,40 +105,42 @@
 .session-bar-right-tools {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     flex-shrink: 0;
 }
 
 .session-toggle-label {
-    font-size: 13px;
+    font-size: 12.5px;
     font-weight: 700;
     color: var(--text-muted);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
 }
 
 .session-pills {
     display: flex;
     background: #f1f5f9;
-    padding: 4px;
+    padding: 3px;
     border-radius: var(--radius-lg);
-    gap: 4px;
+    gap: 3px;
 }
 
 .session-pill-btn {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 8px 20px;
+    gap: 6px;
+    padding: 6px 14px;
     border-radius: var(--radius-md);
     border: none;
     background: transparent;
-    font-size: 13.5px;
+    font-size: 12.5px;
     font-weight: 700;
     color: var(--text-muted);
     cursor: pointer;
     transition: all var(--transition-fast);
     text-decoration: none;
+    white-space: nowrap;
 }
 
 .session-pill-btn:hover {
@@ -136,13 +150,13 @@
 .session-pill-btn.active.am-pill {
     background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
     color: #ffffff !important;
-    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4) !important;
+    box-shadow: 0 3px 10px rgba(37, 99, 235, 0.35) !important;
 }
 
 .session-pill-btn.active.pm-pill {
     background: linear-gradient(135deg, #7c3aed, #6d28d9) !important;
     color: #ffffff !important;
-    box-shadow: 0 4px 14px rgba(124, 58, 237, 0.4) !important;
+    box-shadow: 0 3px 10px rgba(124, 58, 237, 0.35) !important;
 }
 
 .session-pill-btn.active .session-time-hint {
@@ -154,44 +168,41 @@
 .date-picker-group {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     background: #eff6ff;
-    border: 2px solid #3b82f6;
-    border-radius: var(--radius-lg);
-    padding: 6px 14px;
-    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.16);
+    border: 1.5px solid #3b82f6;
+    border-radius: var(--radius-md);
+    padding: 4px 10px;
+    box-shadow: 0 1px 4px rgba(59, 130, 246, 0.12);
     transition: all 0.2s ease;
 }
 
 .date-picker-group:hover {
     border-color: #2563eb;
-    box-shadow: 0 3px 12px rgba(37, 99, 235, 0.22);
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.18);
 }
 
 .date-picker-group label {
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 800;
     color: #1e40af;
-    display: flex;
-    align-items: center;
-    gap: 4px;
+    white-space: nowrap;
 }
 
 .date-input {
-    padding: 6px 12px;
-    border: 1.5px solid #2563eb;
-    border-radius: var(--radius-md);
-    font-size: 13.5px;
+    padding: 4px 8px;
+    border: 1px solid #93c5fd;
+    border-radius: 4px;
+    font-size: 12px;
     font-weight: 700;
     color: #1e3a8a;
     background: #ffffff;
     outline: none;
-    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .date-input:focus {
-    border-color: #1d4ed8;
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25);
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
 }
 
 /* ==========================================================================
