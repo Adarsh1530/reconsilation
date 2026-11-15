@@ -290,8 +290,8 @@ include __DIR__ . '/includes/header.php';
 <!-- ==========================================================================
      SUPER ADMIN NOTIFICATIONS MANAGEMENT MODAL
      ========================================================================== -->
-<div class="modal-backdrop" id="notificationsModalBackdrop" style="display:none;">
-    <div class="modal-card" style="max-width: 680px; width: 95%;">
+<div class="modal-backdrop" id="notificationsModalBackdrop">
+    <div class="modal-dialog" style="max-width: 680px; width: 95%;">
         <div class="modal-header">
             <div>
                 <h3 class="modal-title" style="display: flex; align-items: center; gap: 8px;">

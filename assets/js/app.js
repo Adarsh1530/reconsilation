@@ -249,6 +249,19 @@ function escapeHtml(str) {
 }
 
 /**
+ * Global helper to close any modal by backdrop ID
+ */
+window.closeModalById = function(id) {
+    const el = document.getElementById(id);
+    if (el) {
+        el.classList.remove('show');
+        if (el.style.display && el.style.display !== 'none') {
+            el.style.display = 'none';
+        }
+    }
+};
+
+/**
  * Global CSRF Token getter
  */
 function getCsrfToken() {

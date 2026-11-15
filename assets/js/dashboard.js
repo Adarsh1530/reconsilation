@@ -1323,25 +1323,25 @@ function initNotifications() {
 
     if (isSuperAdmin && manageBtn && modalBackdrop) {
         manageBtn.addEventListener('click', () => {
-            modalBackdrop.style.display = 'flex';
+            modalBackdrop.classList.add('show');
             loadSuperAdminNotificationsList();
         });
 
         if (closeBtn) {
             closeBtn.addEventListener('click', () => {
-                modalBackdrop.style.display = 'none';
+                modalBackdrop.classList.remove('show');
             });
         }
 
         if (doneBtn) {
             doneBtn.addEventListener('click', () => {
-                modalBackdrop.style.display = 'none';
+                modalBackdrop.classList.remove('show');
             });
         }
 
         modalBackdrop.addEventListener('click', (e) => {
             if (e.target === modalBackdrop) {
-                modalBackdrop.style.display = 'none';
+                modalBackdrop.classList.remove('show');
             }
         });
 
