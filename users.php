@@ -141,9 +141,14 @@ include __DIR__ . '/includes/header.php';
                     <input type="text" id="editFullName" name="full_name" class="form-control">
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" onclick="closeModalById('editUserModalBackdrop')">Cancel</button>
-                <button type="submit" class="btn btn-primary">Save Changes</button>
+            <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+                <button type="button" class="btn btn-outline-danger" onclick="deleteUserFromCurrentEdit()">
+                    🗑️ Delete User
+                </button>
+                <div style="display: flex; gap: 8px;">
+                    <button type="button" class="btn btn-outline-secondary" onclick="closeModalById('editUserModalBackdrop')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
             </div>
         </form>
     </div>

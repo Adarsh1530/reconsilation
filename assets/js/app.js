@@ -133,12 +133,12 @@ function confirmModal({
             <div class="modal-dialog">
                 <div class="modal-header">
                     <h3 class="modal-title" id="globalModalTitle"></h3>
-                    <button class="modal-close-btn" id="globalModalCloseBtn">&times;</button>
+                    <button class="modal-close-btn" id="globalModalCloseBtn" type="button">&times;</button>
                 </div>
                 <div class="modal-body" id="globalModalBody"></div>
                 <div class="modal-footer">
-                    <button class="btn btn-outline-secondary" id="globalModalCancelBtn"></button>
-                    <button class="btn" id="globalModalConfirmBtn"></button>
+                    <button class="btn btn-outline-secondary" id="globalModalCancelBtn" type="button"></button>
+                    <button class="btn" id="globalModalConfirmBtn" type="button"></button>
                 </div>
             </div>
         `;
@@ -151,14 +151,30 @@ function confirmModal({
     const confirmBtn = document.getElementById('globalModalConfirmBtn');
     const closeBtn = document.getElementById('globalModalCloseBtn');
 
-    titleEl.textContent = title;
+    titleEl.innerHTML = title;
     bodyEl.innerHTML = message;
     cancelBtn.textContent = cancelText;
     confirmBtn.textContent = confirmText;
     confirmBtn.className = `btn ${confirmClass}`;
 
+    // Danger / delete styling for the modal header
+    const isDanger = confirmClass.includes('danger') || 
+                     title.toLowerCase().includes('delete') || 
+                     confirmText.toLowerCase().includes('delete') ||
+                     title.toLowerCase().includes('reset');
+    if (isDanger) {
+        titleEl.style.color = '#dc2626';
+    } else {
+        titleEl.style.color = 'var(--text-main)';
+    }
+
     function closeModal() {
         backdrop.classList.remove('show');
+        document.removeEventListener('keydown', handleEscape);
+    }
+
+    function handleEscape(e) {
+        if (e.key === 'Escape') closeModal();
     }
 
     closeBtn.onclick = closeModal;
@@ -175,8 +191,49 @@ function confirmModal({
         }
     };
 
+    document.addEventListener('keydown', handleEscape);
     backdrop.classList.add('show');
 }
+
+/**
+ * Global Interceptor for Deletion / Destructive Actions Across Entire Website
+ * Guarantees any button or link marked with data-confirm or generic delete action
+ * is intercepted with a prominent confirmation popup.
+ */
+document.addEventListener('click', function(e) {
+    const target = e.target.closest('button, a, [role="button"]');
+    if (!target) return;
+
+    if (target.hasAttribute('data-confirm')) {
+        e.preventDefault();
+        e.stopPropagation();
+        const msg = target.getAttribute('data-confirm') || 'Are you sure you want to delete this record? This action cannot be undone.';
+        const title = target.getAttribute('data-title') || 'Confirm Deletion';
+        confirmModal({
+            title: '⚠️ ' + title,
+            message: `
+                <div style="font-size: 14px; line-height: 1.5;">
+                    <p style="margin-bottom: 10px; color: var(--text-main);">${escapeHtml(msg)}</p>
+                    <div style="background: #fef2f2; border: 1.5px solid #fecaca; border-radius: 8px; padding: 12px 14px; color: #991b1b; font-size: 13px;">
+                        <strong>⚠️ Warning:</strong> Deleting this item is permanent and cannot be undone.
+                    </div>
+                </div>
+            `,
+            confirmText: 'Yes, Delete',
+            cancelText: 'Cancel',
+            confirmClass: 'btn-danger',
+            onConfirm: () => {
+                if (target.tagName === 'A' && target.href && target.href !== '#' && !target.href.startsWith('javascript:')) {
+                    window.location.href = target.href;
+                } else if (target.type === 'submit' && target.form) {
+                    target.form.submit();
+                } else if (typeof target.dataset.callback === 'string' && typeof window[target.dataset.callback] === 'function') {
+                    window[target.dataset.callback](target);
+                }
+            }
+        });
+    }
+}, true);
 
 /**
  * HTML Escape Helper

@@ -136,9 +136,14 @@ include __DIR__ . '/includes/header.php';
                     </div>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" onclick="closeModalById('editSchoolModalBackdrop')">Cancel</button>
-                <button type="submit" class="btn btn-primary">Update School</button>
+            <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+                <button type="button" class="btn btn-outline-danger" onclick="deleteSchoolFromCurrentEdit()">
+                    🗑️ Delete School
+                </button>
+                <div style="display: flex; gap: 8px;">
+                    <button type="button" class="btn btn-outline-secondary" onclick="closeModalById('editSchoolModalBackdrop')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update School</button>
+                </div>
             </div>
         </form>
     </div>

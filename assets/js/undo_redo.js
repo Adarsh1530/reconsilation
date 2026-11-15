@@ -172,9 +172,19 @@ window.viewHistoryState = function(id) {
 
 window.promptUndo = function(id, schoolName) {
     confirmModal({
-        title: 'Confirm Undo Action',
-        message: `Are you sure you want to revert the last action on <strong>"${escapeHtml(schoolName)}"</strong>? The previous record state will be immediately restored in the live database.`,
-        confirmText: 'Confirm Undo',
+        title: '⚠️ Confirm Undo Action',
+        message: `
+            <div style="font-size: 14px; line-height: 1.5;">
+                <p style="margin-bottom: 10px; color: var(--text-main);">
+                    Are you sure you want to revert the last action on <strong>"${escapeHtml(schoolName)}"</strong>?
+                </p>
+                <div style="background: #fef2f2; border: 1.5px solid #fecaca; border-radius: 8px; padding: 12px 14px; color: #991b1b; font-size: 13px;">
+                    <strong>⚠️ Note:</strong> The previous record state will be immediately restored in the live database.
+                </div>
+            </div>
+        `,
+        confirmText: 'Yes, Confirm Undo',
+        cancelText: 'Cancel',
         confirmClass: 'btn-danger',
         onConfirm: () => {
             const formData = new FormData();

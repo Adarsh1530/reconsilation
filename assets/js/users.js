@@ -197,9 +197,19 @@ window.editUserModal = function(userId) {
 
 window.deleteUserPrompt = function(userId, username) {
     confirmModal({
-        title: 'Delete User Account',
-        message: `Are you sure you want to delete user account <strong>"${escapeHtml(username)}"</strong>? This action cannot be undone.`,
-        confirmText: 'Delete User',
+        title: '⚠️ Confirm User Deletion',
+        message: `
+            <div style="font-size: 14px; line-height: 1.5;">
+                <p style="margin-bottom: 10px; color: var(--text-main);">
+                    Are you sure you want to permanently delete user account <strong>"${escapeHtml(username)}"</strong>?
+                </p>
+                <div style="background: #fef2f2; border: 1.5px solid #fecaca; border-radius: 8px; padding: 12px 14px; color: #991b1b; font-size: 13px;">
+                    <strong>⚠️ Warning:</strong> This user will immediately lose all login credentials and access to the system. This action cannot be undone.
+                </div>
+            </div>
+        `,
+        confirmText: 'Yes, Delete User',
+        cancelText: 'Cancel',
         confirmClass: 'btn-danger',
         onConfirm: () => {
             const formData = new FormData();
@@ -225,6 +235,14 @@ window.deleteUserPrompt = function(userId, username) {
             });
         }
     });
+};
+
+window.deleteUserFromCurrentEdit = function() {
+    const id = document.getElementById('editUserId')?.value;
+    const username = document.getElementById('editUsername')?.value || 'this user';
+    if (!id) return;
+    closeModalById('editUserModalBackdrop');
+    deleteUserPrompt(id, username);
 };
 
 window.closeModalById = function(id) {

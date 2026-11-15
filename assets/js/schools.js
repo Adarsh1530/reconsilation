@@ -227,9 +227,19 @@ window.editSchoolModal = function(id) {
 
 window.deleteSchoolPrompt = function(id, name) {
     confirmModal({
-        title: 'Delete School Record',
-        message: `Are you sure you want to permanently delete <strong>"${escapeHtml(name)}"</strong>? All associated reconciliation and payment history will be deleted.`,
-        confirmText: 'Delete School',
+        title: '⚠️ Confirm School Deletion',
+        message: `
+            <div style="font-size: 14px; line-height: 1.5;">
+                <p style="margin-bottom: 10px; color: var(--text-main);">
+                    Are you sure you want to permanently delete <strong>"${escapeHtml(name)}"</strong>?
+                </p>
+                <div style="background: #fef2f2; border: 1.5px solid #fecaca; border-radius: 8px; padding: 12px 14px; color: #991b1b; font-size: 13px;">
+                    <strong>⚠️ Irreversible Action:</strong> All associated reconciliation records, payment logs, issue reports, refunds, and duplicate receipts for this school will be permanently deleted from the database.
+                </div>
+            </div>
+        `,
+        confirmText: 'Yes, Delete School',
+        cancelText: 'Cancel',
         confirmClass: 'btn-danger',
         onConfirm: () => {
             const formData = new FormData();
@@ -255,4 +265,12 @@ window.deleteSchoolPrompt = function(id, name) {
             });
         }
     });
+};
+
+window.deleteSchoolFromCurrentEdit = function() {
+    const id = document.getElementById('editSchoolId')?.value;
+    const name = document.getElementById('editSchoolName')?.value || 'this school';
+    if (!id) return;
+    closeModalById('editSchoolModalBackdrop');
+    deleteSchoolPrompt(id, name);
 };

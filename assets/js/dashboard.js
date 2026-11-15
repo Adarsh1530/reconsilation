@@ -1016,9 +1016,19 @@ function bindWorkspaceActions() {
         resetBtn.addEventListener('click', () => {
             if (!activeSchoolId) return;
             confirmModal({
-                title: 'Reset School Reconciliation Record',
-                message: 'Are you sure you want to reset this school back to "Pending"? All payment, issue, or refund entries for this session will be cleared.',
-                confirmText: 'Reset to Pending',
+                title: '⚠️ Reset School Reconciliation Record',
+                message: `
+                    <div style="font-size: 14px; line-height: 1.5;">
+                        <p style="margin-bottom: 10px; color: var(--text-main);">
+                            Are you sure you want to reset this school back to <strong>Pending</strong>?
+                        </p>
+                        <div style="background: #fef2f2; border: 1.5px solid #fecaca; border-radius: 8px; padding: 12px 14px; color: #991b1b; font-size: 13px;">
+                            <strong>⚠️ Warning:</strong> All payment selections, issue references, refund details, and duplicate receipts recorded for this session will be cleared from the overview table.
+                        </div>
+                    </div>
+                `,
+                confirmText: 'Yes, Reset to Pending',
+                cancelText: 'Cancel',
                 confirmClass: 'btn-danger',
                 onConfirm: () => {
                     postReconAction('reset_record', {
@@ -1515,9 +1525,19 @@ function toggleNotificationStatus(id, newStatus) {
 
 function deleteNotificationPrompt(id) {
     confirmModal({
-        title: 'Delete Announcement',
-        message: 'Are you sure you want to delete this announcement? It will be removed permanently from all dashboards.',
-        confirmText: 'Delete',
+        title: '⚠️ Confirm Announcement Deletion',
+        message: `
+            <div style="font-size: 14px; line-height: 1.5;">
+                <p style="margin-bottom: 10px; color: var(--text-main);">
+                    Are you sure you want to permanently delete this announcement?
+                </p>
+                <div style="background: #fef2f2; border: 1.5px solid #fecaca; border-radius: 8px; padding: 12px 14px; color: #991b1b; font-size: 13px;">
+                    <strong>⚠️ Notice:</strong> It will be permanently removed from all staff and administrator dashboards immediately.
+                </div>
+            </div>
+        `,
+        confirmText: 'Yes, Delete Announcement',
+        cancelText: 'Cancel',
         confirmClass: 'btn-danger',
         onConfirm: () => {
             const formData = new FormData();
