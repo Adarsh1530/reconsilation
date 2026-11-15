@@ -648,7 +648,7 @@
 .data-table td {
     white-space: nowrap !important;
     vertical-align: middle !important;
-    padding: 11px 14px;
+    padding: 10px 10px;
 }
 
 .custom-remark-pill {
@@ -786,12 +786,12 @@
 .completion-tracking-pill {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 4px 10px;
+    gap: 4px;
+    padding: 2.5px 7px;
     background: #ecfdf5;
     border: 1.5px solid #a7f3d0;
-    border-radius: 6px;
-    font-size: 12px;
+    border-radius: 5px;
+    font-size: 11px;
     font-weight: 700;
     color: #047857;
     white-space: nowrap;
