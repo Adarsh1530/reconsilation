@@ -65,11 +65,6 @@ $active_session = $_SESSION['active_session'] ?? (date('H') >= 14 ? SESSION_PM :
                     <span class="live-date-display" id="liveDateDisplay">Loading...</span>
                 </div>
 
-                <!-- Current Active Session Indicator -->
-                <div class="session-pill-btn active <?= ($active_session === 'AM') ? 'am-pill' : 'pm-pill' ?>" style="font-size: 12px; padding: 4px 12px; pointer-events: none;">
-                    <?= ($active_session === 'AM') ? '☀️ Morning Session' : '🌙 Evening Session' ?>
-                </div>
-
                 <!-- User Role Badge -->
                 <span class="user-role-badge badge-<?= e($user['role_slug']) ?>">
                     <?= e($user['role_name']) ?>
