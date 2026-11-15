@@ -12,11 +12,11 @@
     justify-content: space-between;
     background: #ffffff;
     border-radius: var(--radius-xl);
-    padding: 12px 20px;
+    padding: 10px 16px;
     border: 1px solid var(--border-color);
     box-shadow: var(--shadow-sm);
     margin-bottom: 24px;
-    gap: 12px;
+    gap: 10px;
 }
 
 @media (min-width: 1024px) {
@@ -47,7 +47,7 @@
     background: linear-gradient(135deg, #eff6ff 0%, #eef2ff 100%);
     border: 1.5px solid #6366f1;
     border-radius: var(--radius-lg);
-    padding: 5px 14px;
+    padding: 4px 10px;
     box-shadow: 0 2px 8px rgba(99, 102, 241, 0.12);
     white-space: nowrap;
     flex-shrink: 0;
@@ -190,7 +190,7 @@
 }
 
 .date-input {
-    padding: 4px 8px;
+    padding: 4px 6px;
     border: 1px solid #93c5fd;
     border-radius: 4px;
     font-size: 12px;
@@ -198,6 +198,7 @@
     color: #1e3a8a;
     background: #ffffff;
     outline: none;
+    max-width: 125px;
 }
 
 .date-input:focus {
