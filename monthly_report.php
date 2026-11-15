@@ -67,72 +67,21 @@ include __DIR__ . '/includes/header.php';
         </div>
     </div>
 
-    <!-- Month Navigator & Filter Bar -->
-    <div style="background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; box-shadow: var(--shadow-sm);">
-        <!-- Month Navigator -->
-        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-            <button type="button" class="btn btn-outline-secondary btn-sm" id="btnPrevMonth" title="Previous Month">
-                &larr; Prev Month
-            </button>
-            <div style="display: flex; align-items: center; gap: 6px;">
-                <label for="reportMonthInput" style="font-size: 13px; font-weight: 700; color: var(--text-main); margin-bottom: 0;">Month:</label>
-                <input type="month" id="reportMonthInput" class="form-control" value="<?= e($month_str) ?>" style="width: 160px; font-size: 13.5px; font-weight: 700; padding: 6px 10px;">
-            </div>
-            <button type="button" class="btn btn-outline-secondary btn-sm" id="btnNextMonth" title="Next Month">
-                Next Month &rarr;
-            </button>
-            <button type="button" class="btn btn-sm" id="btnCurrentMonth" style="background: #f1f5f9; color: #475569; font-weight: 600; border: 1px solid #cbd5e1;" title="Jump to Current Month">
-                Current Month
-            </button>
+    <!-- Month Navigator Bar -->
+    <div style="background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 12px 18px; display: flex; align-items: center; justify-content: flex-start; gap: 10px; box-shadow: var(--shadow-sm); flex-wrap: wrap;">
+        <button type="button" class="btn btn-outline-secondary btn-sm" id="btnPrevMonth" title="Previous Month">
+            &larr; Prev Month
+        </button>
+        <div style="display: flex; align-items: center; gap: 6px;">
+            <label for="reportMonthInput" style="font-size: 13px; font-weight: 700; color: var(--text-main); margin-bottom: 0;">Month:</label>
+            <input type="month" id="reportMonthInput" class="form-control" value="<?= e($month_str) ?>" style="width: 160px; font-size: 13.5px; font-weight: 700; padding: 6px 10px;">
         </div>
-
-        <!-- Session Filter & Search Filter -->
-        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-            <div style="display: flex; align-items: center; gap: 6px;">
-                <label for="reportSessionSelect" style="font-size: 13px; font-weight: 600; color: var(--text-muted); margin-bottom: 0;">Session:</label>
-                <select id="reportSessionSelect" class="form-control" style="width: auto; font-size: 13px; padding: 6px 12px;">
-                    <option value="ALL">Both Sessions (Combined)</option>
-                    <option value="AM">Morning Session (AM)</option>
-                    <option value="PM">Evening Session (PM)</option>
-                </select>
-            </div>
-
-            <div style="position: relative;">
-                <input type="text" id="reportSchoolSearch" class="form-control" placeholder="Search school name or code..." style="width: 220px; font-size: 13px; padding: 6px 12px 6px 30px;">
-                <span style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); font-size: 12px; color: #94a3b8;">🔍</span>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- ==========================================================================
-     MONTHLY SUMMARY OVERVIEW CARDS
-     ========================================================================== -->
-<div class="stats-grid" style="margin-bottom: 20px;">
-    <div class="stat-card">
-        <div class="stat-label">Active Schools</div>
-        <div class="stat-value" id="summaryTotalSchools">-</div>
-        <div class="stat-desc">Schools tracked this month</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-label">Days in Month</div>
-        <div class="stat-value" id="summaryDaysInMonth">-</div>
-        <div class="stat-desc" id="summaryMonthLabel">Loading...</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-label">Completed Reconciliations</div>
-        <div class="stat-value" id="summaryCompleted">-</div>
-        <div class="stat-desc">Daily sessions verified</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-label">Issues Reported</div>
-        <div class="stat-value" id="summaryIssues" style="color: #dc2626;">-</div>
-        <div class="stat-desc">Reconciliation issue count</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-label">Duplicate Receipts</div>
-        <div class="stat-value" id="summaryDuplicates" style="color: #0284c7;">-</div>
-        <div class="stat-desc">Duplicate reference tracker</div>
+        <button type="button" class="btn btn-outline-secondary btn-sm" id="btnNextMonth" title="Next Month">
+            Next Month &rarr;
+        </button>
+        <button type="button" class="btn btn-sm" id="btnCurrentMonth" style="background: #f1f5f9; color: #475569; font-weight: 600; border: 1px solid #cbd5e1;" title="Jump to Current Month">
+            Current Month
+        </button>
     </div>
 </div>
 

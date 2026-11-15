@@ -272,9 +272,15 @@ function buildMonthlyReportData(PDO $pdo, int $year, int $month, string $session
                     if (!in_array($dr['refund_reference'], $refunds)) $refunds[] = $dr['refund_reference'];
                 }
 
-                // Duplicates
+                // Duplicates (include description for report / PDF / Excel)
                 if (!empty($dr['duplicate_receipt_no'])) {
-                    if (!in_array($dr['duplicate_receipt_no'], $duplicates)) $duplicates[] = $dr['duplicate_receipt_no'];
+                    $dupText = $dr['duplicate_receipt_no'];
+                    if (!empty($dr['duplicate_receipt_desc'])) {
+                        $dupText .= ' (' . trim($dr['duplicate_receipt_desc']) . ')';
+                    }
+                    if (!in_array($dupText, $duplicates)) {
+                        $duplicates[] = $dupText;
+                    }
                 }
 
                 // Custom remarks

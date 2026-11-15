@@ -12,11 +12,9 @@ let currentReportData = null;
 
 function initMonthlyReport() {
     const monthInput = document.getElementById('reportMonthInput');
-    const sessionSelect = document.getElementById('reportSessionSelect');
     const prevBtn = document.getElementById('btnPrevMonth');
     const nextBtn = document.getElementById('btnNextMonth');
     const currentBtn = document.getElementById('btnCurrentMonth');
-    const searchInput = document.getElementById('reportSchoolSearch');
     const downloadExcelBtn = document.getElementById('btnDownloadExcel');
     const downloadPdfBtn = document.getElementById('btnDownloadPdf');
 
@@ -26,12 +24,6 @@ function initMonthlyReport() {
     // Event listeners for month navigation
     if (monthInput) {
         monthInput.addEventListener('change', () => {
-            loadMonthlyReport();
-        });
-    }
-
-    if (sessionSelect) {
-        sessionSelect.addEventListener('change', () => {
             loadMonthlyReport();
         });
     }
@@ -60,19 +52,11 @@ function initMonthlyReport() {
         });
     }
 
-    // Live search filter on school name/code
-    if (searchInput) {
-        searchInput.addEventListener('input', () => {
-            filterMatrixSchools(searchInput.value.trim().toLowerCase());
-        });
-    }
-
     // Excel Download Button
     if (downloadExcelBtn) {
         downloadExcelBtn.addEventListener('click', () => {
             const { year, month } = getSelectedYearMonth();
-            const session = sessionSelect ? sessionSelect.value : 'ALL';
-            const url = `api/monthly_report.php?action=export_excel&year=${year}&month=${month}&session=${encodeURIComponent(session)}`;
+            const url = `api/monthly_report.php?action=export_excel&year=${year}&month=${month}&session=ALL`;
             window.location.href = url;
         });
     }
@@ -121,8 +105,6 @@ function shiftMonth(delta) {
  */
 function loadMonthlyReport() {
     const { year, month } = getSelectedYearMonth();
-    const sessionSelect = document.getElementById('reportSessionSelect');
-    const session = sessionSelect ? sessionSelect.value : 'ALL';
 
     const tbody = document.getElementById('reportMatrixTbody');
     if (tbody) {
@@ -138,7 +120,7 @@ function loadMonthlyReport() {
         `;
     }
 
-    fetch(`api/monthly_report.php?action=get_monthly_data&year=${year}&month=${month}&session=${encodeURIComponent(session)}`)
+    fetch(`api/monthly_report.php?action=get_monthly_data&year=${year}&month=${month}&session=ALL`)
         .then(res => res.json())
         .then(res => {
             if (res.success && res.data) {
@@ -172,29 +154,14 @@ function loadMonthlyReport() {
 }
 
 /**
- * Render Overview Summary KPI cards
+ * Render Overview Summary
  */
 function renderReportSummary(data) {
-    const s = data.summary || {};
-    const totalSchoolsEl = document.getElementById('summaryTotalSchools');
-    const daysInMonthEl = document.getElementById('summaryDaysInMonth');
-    const monthLabelEl = document.getElementById('summaryMonthLabel');
-    const completedEl = document.getElementById('summaryCompleted');
-    const issuesEl = document.getElementById('summaryIssues');
-    const duplicatesEl = document.getElementById('summaryDuplicates');
-
     const matrixMonthLabel = document.getElementById('matrixMonthLabel');
     const printMonthLabel = document.getElementById('printMonthLabel');
 
-    if (totalSchoolsEl) totalSchoolsEl.textContent = s.total_schools ?? '-';
-    if (daysInMonthEl) daysInMonthEl.textContent = s.days_in_month ?? '-';
-    if (monthLabelEl) monthLabelEl.textContent = data.month_label ?? '';
-    if (completedEl) completedEl.textContent = s.total_completed ?? 0;
-    if (issuesEl) issuesEl.textContent = s.total_issues ?? 0;
-    if (duplicatesEl) duplicatesEl.textContent = s.total_duplicates ?? 0;
-
     if (matrixMonthLabel) matrixMonthLabel.textContent = data.month_label ?? '';
-    if (printMonthLabel) printMonthLabel.textContent = `${data.month_label} (${data.session_filter === 'ALL' ? 'Both Sessions' : data.session_filter + ' Session'})`;
+    if (printMonthLabel) printMonthLabel.textContent = data.month_label ?? '';
 }
 
 /**
@@ -205,21 +172,19 @@ function renderMatrixTable(data) {
     const tbody = document.getElementById('reportMatrixTbody');
     if (!thead || !tbody) return;
 
-    // 1. Build Header
+    // 1. Build Header - Clean day-wise numbers (1, 2, 3...) matching ref_report.xlsx
     let theadHtml = '<tr>';
     theadHtml += '<th class="school-col-header">School Name</th>';
 
     data.days.forEach(d => {
         const cls = [
             'day-header',
-            d.is_today ? 'is-today' : '',
-            d.is_weekend ? 'is-weekend' : ''
+            d.is_today ? 'is-today' : ''
         ].filter(Boolean).join(' ');
 
         theadHtml += `
             <th class="${cls}">
                 <div style="font-size: 14px; font-weight: 800;">${d.day}</div>
-                <div style="font-size: 10px; opacity: 0.8; font-weight: 600; text-transform: uppercase;">${escapeHtml(d.day_name)}</div>
             </th>
         `;
     });
@@ -240,7 +205,7 @@ function renderMatrixTable(data) {
 
     let tbodyHtml = '';
     data.matrix.forEach(sRow => {
-        tbodyHtml += `<tr class="school-row" data-school-name="${escapeHtml(sRow.school_name.toLowerCase())}" data-school-code="${escapeHtml((sRow.school_code || '').toLowerCase())}">`;
+        tbodyHtml += `<tr class="school-row">`;
 
         // First Column: School Name & Code
         tbodyHtml += `
@@ -263,7 +228,7 @@ function renderMatrixTable(data) {
                 continue;
             }
 
-            // Cell has data! Render exactly matching ref_report.xlsx layout
+            // Cell has data! Render matching ref_report.xlsx layout
             const usersStr = cell.users && cell.users.length > 0 ? cell.users.join(', ') : '-';
             const timesStr = cell.times && cell.times.length > 0 ? cell.times.join(', ') : '-';
 
