@@ -38,15 +38,15 @@ include __DIR__ . '/includes/header.php';
      ========================================================================== -->
 <div class="session-control-bar">
     <div class="session-toggle-wrapper">
-        <span class="session-toggle-label">Reconciliation Session:</span>
+        <span class="session-toggle-label">Session:</span>
         <div class="session-pills">
             <button type="button" class="session-pill-btn session-switch-btn am-pill <?= ($active_session === 'AM') ? 'active' : '' ?>" data-session="AM">
-                <span>☀️ Morning Session</span>
-                <span class="session-time-hint"><?= e($am_start) ?> – <?= e($am_end) ?></span>
+                <span>☀️ Morning</span>
+                <span class="session-time-hint"><?= e($am_start) ?>–<?= e($am_end) ?></span>
             </button>
             <button type="button" class="session-pill-btn session-switch-btn pm-pill <?= ($active_session === 'PM') ? 'active' : '' ?>" data-session="PM">
-                <span>🌙 Evening Session</span>
-                <span class="session-time-hint"><?= e($pm_start) ?> – <?= e($pm_end) ?></span>
+                <span>🌙 Evening</span>
+                <span class="session-time-hint"><?= e($pm_start) ?>–<?= e($pm_end) ?></span>
             </button>
         </div>
     </div>
@@ -65,12 +65,6 @@ include __DIR__ . '/includes/header.php';
             <label for="workingDateInput">Working Date:</label>
             <input type="date" id="workingDateInput" class="date-input" value="<?= e($working_date) ?>" max="<?= date('Y-m-d') ?>">
         </div>
-
-        <?php if (has_role(ROLE_SUPER_ADMIN)): ?>
-        <button type="button" class="btn btn-sm btn-notification-manage" id="btnManageNotifications" title="Super Admin: Post or manage notifications for all users">
-            📣 Manage Announcements
-        </button>
-        <?php endif; ?>
     </div>
 </div>
 
