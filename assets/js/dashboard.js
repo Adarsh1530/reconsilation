@@ -379,10 +379,16 @@ function renderMainTable(records) {
 
         // Status badge & remark text
         let badgeClass = 'badge-pending';
-        let remarkText = rec.overall_remark || 'Pending';
+        let remarkText = 'Pending';
         let tooltipText = '';
 
-        if (isResolved) {
+        if (rec.is_completed == 1) {
+            badgeClass = 'badge-completed';
+            remarkText = 'Completed';
+            if (rec.custom_remark) {
+                tooltipText = 'Remark: ' + rec.custom_remark;
+            }
+        } else if (isResolved) {
             badgeClass = 'badge-completed';
             remarkText = 'Resolved';
             tooltipText = rec.overall_remark || ('Resolved by ' + (rec.urgent_resolved_by_user || 'Admin'));
@@ -396,53 +402,25 @@ function renderMainTable(records) {
         } else if (rec.payment_status === 'NO_PAYMENT') {
             badgeClass = 'badge-no-payment';
             remarkText = 'No Payment';
-        } else if (rec.reconciliation_status === 'ISSUE') {
-            badgeClass = 'badge-issue';
-            remarkText = 'Issue (' + rec.issue_reference + ')';
-        } else if (rec.refund_status === 'PROCESSED') {
-            badgeClass = 'badge-refund';
-            remarkText = 'Refund (' + rec.refund_reference + ')';
-        } else if (rec.is_completed) {
-            badgeClass = 'badge-completed';
-            remarkText = 'Completed';
+        } else if (rec.custom_remark && rec.custom_remark.trim() !== '') {
+            badgeClass = 'badge-pending';
+            remarkText = 'Pending';
+            tooltipText = 'Remark: ' + rec.custom_remark;
+        } else {
+            badgeClass = 'badge-pending';
+            remarkText = 'Pending';
         }
 
-        // Reconciliation column display (strictly one line)
+        // Reconciliation column display: overview of number only
         let reconDisplay = '<span style="color: #94a3b8; font-size: 12.5px; white-space: nowrap;">No Issue Reported</span>';
-        if (rec.reconciliation_status === 'ISSUE') {
-            if (isResolved) {
-                reconDisplay = `
-                    <div style="display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;" title="Resolved by ${escapeHtml(rec.urgent_resolved_by_user || rec.updated_by_user || 'Admin')}">
-                        <span class="status-badge badge-completed">✓ Resolved</span>
-                        <strong style="font-family: monospace;">Count: ${escapeHtml(rec.issue_reference)}</strong>
-                    </div>
-                `;
-            } else if (isEscalatedOpen) {
-                reconDisplay = `
-                    <div style="display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;" title="Count exceeds 10 - Escalated to Admin & Super Admin Panel">
-                        <span class="status-badge badge-issue">Issue</span>
-                        <strong style="font-family: monospace;">Count: ${escapeHtml(rec.issue_reference)}</strong>
-                    </div>
-                `;
-            } else {
-                reconDisplay = `
-                    <div style="display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;">
-                        <span class="status-badge badge-issue">Issue</span>
-                        <strong style="font-family: monospace;">${escapeHtml(rec.issue_reference)}</strong>
-                    </div>
-                `;
-            }
+        if (rec.reconciliation_status === 'ISSUE' && rec.issue_reference) {
+            reconDisplay = `<strong style="font-family: monospace; font-size: 13px; color: #dc2626; white-space: nowrap;" title="Reconciliation Issue: ${escapeHtml(rec.issue_reference)}">${escapeHtml(rec.issue_reference)}</strong>`;
         }
 
-        // Refund display (strictly one line)
+        // Refund display: overview of number only
         let refundDisplay = '<span style="color: #94a3b8; font-size: 12.5px; white-space: nowrap;">None</span>';
-        if (rec.refund_status === 'PROCESSED') {
-            refundDisplay = `
-                <div style="display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;">
-                    <span class="status-badge badge-refund">Refund</span>
-                    <strong style="font-family: monospace;">${escapeHtml(rec.refund_reference)}</strong>
-                </div>
-            `;
+        if (rec.refund_status === 'PROCESSED' && rec.refund_reference) {
+            refundDisplay = `<strong style="font-family: monospace; font-size: 13px; color: #ea580c; white-space: nowrap;" title="Refund Reference: ${escapeHtml(rec.refund_reference)}">${escapeHtml(rec.refund_reference)}</strong>`;
         }
 
         // Admin resolve button if escalated
@@ -510,16 +488,11 @@ function renderMainTable(records) {
             `;
         }
 
-        // Dedicated Duplicate Receipt column display (strictly one line)
+        // Dedicated Duplicate Receipt column display: overview of number only
         let dupDisplay = '<span style="color: #94a3b8; font-size: 12.5px; white-space: nowrap;">None</span>';
         if (rec.duplicate_receipt_no && rec.duplicate_receipt_no.trim() !== '') {
             const desc = rec.duplicate_receipt_desc ? ` - ${escapeHtml(rec.duplicate_receipt_desc)}` : '';
-            dupDisplay = `
-                <div style="display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;" title="Duplicate Receipt: ${escapeHtml(rec.duplicate_receipt_no)}${desc}">
-                    <span class="status-badge badge-dup-receipt">📄 Dup</span>
-                    <strong style="font-family: monospace; font-size: 12px; color: #0284c7;">${escapeHtml(rec.duplicate_receipt_no)}</strong>
-                </div>
-            `;
+            dupDisplay = `<strong style="font-family: monospace; font-size: 13px; color: #0284c7; white-space: nowrap;" title="Duplicate Receipt: ${escapeHtml(rec.duplicate_receipt_no)}${desc}">${escapeHtml(rec.duplicate_receipt_no)}</strong>`;
         }
 
         // Completion tracking: User – Date – Time (displayed on right side)
@@ -575,7 +548,6 @@ function renderMainTable(records) {
                             <span class="status-badge ${badgeClass}" ${finalTooltip ? `title="${escapeHtml(finalTooltip)}"` : ''}>
                                 ${escapeHtml(remarkText)}
                             </span>
-                            ${customRemarkHtml}
                         </div>
                         <div style="display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; white-space: nowrap;">
                             ${completionTrackingHtml}
