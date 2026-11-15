@@ -159,6 +159,20 @@
     box-shadow: 0 3px 10px rgba(124, 58, 237, 0.35) !important;
 }
 
+.session-time-hint {
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: #e2e8f0;
+    color: var(--text-muted);
+}
+
+@media (max-width: 1400px) {
+    .session-time-hint {
+        display: none;
+    }
+}
+
 .session-pill-btn.active .session-time-hint {
     background: rgba(255, 255, 255, 0.25) !important;
     color: #ffffff !important;
