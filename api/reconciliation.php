@@ -147,6 +147,9 @@ try {
             $rec = get_or_create_record($pdo, $school_id, $date, $session);
             $prev_state = json_encode($rec);
 
+            $comp_by = !empty($rec['completed_by']) ? $rec['completed_by'] : $user['id'];
+            $comp_at = !empty($rec['completed_at']) ? $rec['completed_at'] : date('Y-m-d H:i:s');
+
             // Mutually exclusive: disables payment success, recon issue, refund
             $upd = $pdo->prepare("
                 UPDATE reconciliation_records 
@@ -157,13 +160,18 @@ try {
                     refund_reference = NULL,
                     overall_remark = 'No Payment',
                     is_completed = 1,
-                    completed_by = COALESCE(completed_by, :comp_uid),
-                    completed_at = COALESCE(completed_at, NOW()),
+                    completed_by = :completed_by,
+                    completed_at = :completed_at,
                     updated_by = :uid,
                     updated_at = NOW()
                 WHERE id = :id
             ");
-            $upd->execute([':uid' => $user['id'], ':comp_uid' => $user['id'], ':id' => $rec['id']]);
+            $upd->execute([
+                ':completed_by' => $comp_by,
+                ':completed_at' => $comp_at,
+                ':uid' => $user['id'],
+                ':id' => $rec['id']
+            ]);
 
             $new_rec = get_or_create_record($pdo, $school_id, $date, $session);
             $new_state = json_encode($new_rec);
@@ -204,6 +212,9 @@ try {
             $rec = get_or_create_record($pdo, $school_id, $date, $session);
             $prev_state = json_encode($rec);
 
+            $comp_by = !empty($rec['completed_by']) ? $rec['completed_by'] : $user['id'];
+            $comp_at = !empty($rec['completed_at']) ? $rec['completed_at'] : date('Y-m-d H:i:s');
+
             // Mutually exclusive: disables no payment, recon issue, refund
             $upd = $pdo->prepare("
                 UPDATE reconciliation_records 
@@ -214,13 +225,18 @@ try {
                     refund_reference = NULL,
                     overall_remark = 'Payment Success',
                     is_completed = 1,
-                    completed_by = COALESCE(completed_by, :comp_uid),
-                    completed_at = COALESCE(completed_at, NOW()),
+                    completed_by = :completed_by,
+                    completed_at = :completed_at,
                     updated_by = :uid,
                     updated_at = NOW()
                 WHERE id = :id
             ");
-            $upd->execute([':uid' => $user['id'], ':comp_uid' => $user['id'], ':id' => $rec['id']]);
+            $upd->execute([
+                ':completed_by' => $comp_by,
+                ':completed_at' => $comp_at,
+                ':uid' => $user['id'],
+                ':id' => $rec['id']
+            ]);
 
             $new_rec = get_or_create_record($pdo, $school_id, $date, $session);
             $new_state = json_encode($new_rec);
@@ -281,6 +297,9 @@ try {
             $rec = get_or_create_record($pdo, $school_id, $date, $session);
             $prev_state = json_encode($rec);
 
+            $comp_by = ($is_completed === 1) ? (!empty($rec['completed_by']) ? $rec['completed_by'] : $user['id']) : $rec['completed_by'];
+            $comp_at = ($is_completed === 1) ? (!empty($rec['completed_at']) ? $rec['completed_at'] : date('Y-m-d H:i:s')) : $rec['completed_at'];
+
             $upd = $pdo->prepare("
                 UPDATE reconciliation_records 
                 SET reconciliation_status = 'ISSUE',
@@ -289,8 +308,8 @@ try {
                     overall_remark = :remark,
                     is_urgent = :is_urgent,
                     is_completed = :is_completed,
-                    completed_by = IF(:is_comp = 1, COALESCE(completed_by, :comp_uid), completed_by),
-                    completed_at = IF(:is_comp = 1, COALESCE(completed_at, NOW()), completed_at),
+                    completed_by = :completed_by,
+                    completed_at = :completed_at,
                     updated_by = :uid,
                     updated_at = NOW()
                 WHERE id = :id
@@ -300,8 +319,8 @@ try {
                 ':remark' => $remark,
                 ':is_urgent' => $is_urgent,
                 ':is_completed' => $is_completed,
-                ':is_comp' => $is_completed,
-                ':comp_uid' => $user['id'],
+                ':completed_by' => $comp_by,
+                ':completed_at' => $comp_at,
                 ':uid' => $user['id'],
                 ':id' => $rec['id']
             ]);
@@ -440,6 +459,9 @@ try {
             $rec = get_or_create_record($pdo, $school_id, $date, $session);
             $prev_state = json_encode($rec);
 
+            $comp_by = !empty($rec['completed_by']) ? $rec['completed_by'] : $user['id'];
+            $comp_at = !empty($rec['completed_at']) ? $rec['completed_at'] : date('Y-m-d H:i:s');
+
             $upd = $pdo->prepare("
                 UPDATE reconciliation_records 
                 SET refund_status = 'PROCESSED',
@@ -447,15 +469,16 @@ try {
                     payment_status = 'NONE',
                     overall_remark = 'Refund',
                     is_completed = 1,
-                    completed_by = COALESCE(completed_by, :comp_uid),
-                    completed_at = COALESCE(completed_at, NOW()),
+                    completed_by = :completed_by,
+                    completed_at = :completed_at,
                     updated_by = :uid,
                     updated_at = NOW()
                 WHERE id = :id
             ");
             $upd->execute([
                 ':ref' => $refund_reference,
-                ':comp_uid' => $user['id'],
+                ':completed_by' => $comp_by,
+                ':completed_at' => $comp_at,
                 ':uid' => $user['id'],
                 ':id' => $rec['id']
             ]);
