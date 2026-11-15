@@ -63,52 +63,64 @@
 }
 
 .session-pill-btn.active.am-pill {
-    background: #ffffff;
-    color: #2563eb;
-    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.15);
+    background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4) !important;
 }
 
 .session-pill-btn.active.pm-pill {
-    background: #ffffff;
-    color: #7c3aed;
-    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.15);
+    background: linear-gradient(135deg, #7c3aed, #6d28d9) !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 14px rgba(124, 58, 237, 0.4) !important;
 }
 
-.session-time-hint {
-    font-size: 11px;
-    font-weight: 500;
-    opacity: 0.85;
-    background: rgba(0, 0, 0, 0.05);
-    padding: 2px 6px;
-    border-radius: var(--radius-full);
+.session-pill-btn.active .session-time-hint {
+    background: rgba(255, 255, 255, 0.25) !important;
+    color: #ffffff !important;
+    font-weight: 600;
 }
 
 .date-picker-group {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
+    background: #eff6ff;
+    border: 2px solid #3b82f6;
+    border-radius: var(--radius-lg);
+    padding: 6px 14px;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.16);
+    transition: all 0.2s ease;
+}
+
+.date-picker-group:hover {
+    border-color: #2563eb;
+    box-shadow: 0 3px 12px rgba(37, 99, 235, 0.22);
 }
 
 .date-picker-group label {
     font-size: 13px;
-    font-weight: 600;
-    color: var(--text-muted);
+    font-weight: 800;
+    color: #1e40af;
+    display: flex;
+    align-items: center;
+    gap: 4px;
 }
 
 .date-input {
-    padding: 7px 12px;
-    border: 1px solid var(--border-color);
+    padding: 6px 12px;
+    border: 1.5px solid #2563eb;
     border-radius: var(--radius-md);
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text-main);
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #1e3a8a;
     background: #ffffff;
     outline: none;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .date-input:focus {
-    border-color: var(--primary);
-    box-shadow: 0 0 0 2px var(--primary-glow);
+    border-color: #1d4ed8;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25);
 }
 
 /* ==========================================================================
@@ -380,15 +392,21 @@
     padding: 24px;
 }
 
-/* Workspace Sections Grid */
+/* Workspace Sections Grid (5 Controls: Payment, Recon, Refund, Duplicate Receipt, Remarks) */
 .workspace-controls-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 18px;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 16px;
     margin-bottom: 20px;
 }
 
-@media (max-width: 1280px) {
+@media (max-width: 1440px) {
+    .workspace-controls-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 1024px) {
     .workspace-controls-grid {
         grid-template-columns: repeat(2, 1fr);
     }
@@ -629,6 +647,169 @@
     padding: 3px 8px;
     border-radius: var(--radius-sm);
     margin-top: 4px;
+}
+
+/* ==========================================================================
+   DUPLICATE RECEIPT STYLES
+   ========================================================================== */
+.btn-dup-receipt {
+    background: linear-gradient(135deg, #0284c7, #0369a1);
+    color: #ffffff;
+    font-weight: 700;
+    padding: 10px 14px;
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(2, 132, 199, 0.25);
+    transition: all var(--transition-fast);
+}
+
+.btn-dup-receipt:hover {
+    background: linear-gradient(135deg, #0369a1, #075985);
+    box-shadow: 0 4px 10px rgba(2, 132, 199, 0.35);
+}
+
+.badge-dup-receipt {
+    background: #e0f2fe;
+    color: #0369a1;
+    border: 1px solid #bae6fd;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 11.5px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+}
+
+/* ==========================================================================
+   COMPLETION TRACKING STYLES (User – Date – Time)
+   ========================================================================== */
+.completion-tracking-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: #ecfdf5;
+    border: 1.5px solid #a7f3d0;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #047857;
+    white-space: nowrap;
+    box-shadow: 0 1px 3px rgba(4, 120, 87, 0.08);
+}
+
+/* ==========================================================================
+   SUPER ADMIN ANNOUNCEMENTS BANNER & MANAGEMENT
+   ========================================================================== */
+.btn-notification-manage {
+    background: linear-gradient(135deg, #4f46e5, #4338ca);
+    color: #ffffff;
+    font-weight: 700;
+    padding: 7px 14px;
+    border-radius: var(--radius-md);
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12.5px;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.btn-notification-manage:hover {
+    background: linear-gradient(135deg, #4338ca, #3730a3);
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.35);
+    transform: translateY(-1px);
+}
+
+.announcements-banner-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.announcement-card {
+    border-radius: var(--radius-xl);
+    padding: 16px 20px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    position: relative;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    animation: fadeIn 0.3s ease;
+}
+
+.announcement-card.type-info {
+    background: linear-gradient(135deg, #eff6ff, #dbeafe);
+    border: 2px solid #3b82f6;
+    color: #1e3a8a;
+}
+
+.announcement-card.type-warning {
+    background: linear-gradient(135deg, #fffbeb, #fef3c7);
+    border: 2px solid #f59e0b;
+    color: #78350f;
+}
+
+.announcement-card.type-urgent {
+    background: linear-gradient(135deg, #fff1f2, #ffe4e6);
+    border: 2px solid #e11d48;
+    color: #881337;
+}
+
+.announcement-card.type-success {
+    background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+    border: 2px solid #10b981;
+    color: #064e3b;
+}
+
+.announcement-icon-badge {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 19px;
+    flex-shrink: 0;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.announcement-content {
+    flex-grow: 1;
+}
+
+.announcement-title {
+    font-size: 14.5px;
+    font-weight: 800;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.announcement-message {
+    font-size: 13.5px;
+    line-height: 1.5;
+    opacity: 0.95;
+    white-space: pre-line;
+}
+
+.announcement-meta {
+    font-size: 12px;
+    font-weight: 600;
+    opacity: 0.8;
+    margin-top: 6px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
 /* Responsive adjustments */

@@ -29,9 +29,9 @@ include __DIR__ . '/includes/header.php';
             <option value="Resolved">Resolved Cases Only</option>
         </select>
         <select id="urgentSessionFilter" class="form-control" style="width: auto; padding: 6px 12px; font-size: 13px;">
-            <option value="">All Sessions (AM & PM)</option>
-            <option value="AM">AM Session</option>
-            <option value="PM">PM Session</option>
+            <option value="">All Sessions (Morning & Evening)</option>
+            <option value="AM">Morning Session</option>
+            <option value="PM">Evening Session</option>
         </select>
     </div>
 </div>

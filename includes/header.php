@@ -67,7 +67,7 @@ $active_session = $_SESSION['active_session'] ?? (date('H') >= 14 ? SESSION_PM :
 
                 <!-- Current Active Session Indicator -->
                 <div class="session-pill-btn active <?= ($active_session === 'AM') ? 'am-pill' : 'pm-pill' ?>" style="font-size: 12px; padding: 4px 12px; pointer-events: none;">
-                    <?= ($active_session === 'AM') ? '☀️ AM Session' : '🌙 PM Session' ?>
+                    <?= ($active_session === 'AM') ? '☀️ Morning Session' : '🌙 Evening Session' ?>
                 </div>
 
                 <!-- User Role Badge -->

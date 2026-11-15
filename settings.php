@@ -45,25 +45,25 @@ include __DIR__ . '/includes/header.php';
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; background: #f8fafc; padding: 18px; border-radius: var(--radius-lg); border: 1px solid var(--border-color); margin-bottom: 24px;">
                     <div>
-                        <h4 style="font-size: 13px; font-weight: 700; color: #2563eb; margin-bottom: 10px;">☀️ AM Session Schedule</h4>
+                        <h4 style="font-size: 13px; font-weight: 700; color: #2563eb; margin-bottom: 10px;">☀️ Morning Session Schedule</h4>
                         <div class="form-group">
-                            <label class="form-label">AM Start Time</label>
+                            <label class="form-label">Morning Start Time</label>
                             <input type="time" name="settings[am_start_time]" class="form-control" value="<?= e($am_start) ?>" required>
                         </div>
                         <div class="form-group" style="margin-bottom: 0;">
-                            <label class="form-label">AM End Time</label>
+                            <label class="form-label">Morning End Time</label>
                             <input type="time" name="settings[am_end_time]" class="form-control" value="<?= e($am_end) ?>" required>
                         </div>
                     </div>
 
                     <div>
-                        <h4 style="font-size: 13px; font-weight: 700; color: #7c3aed; margin-bottom: 10px;">🌙 PM Session Schedule</h4>
+                        <h4 style="font-size: 13px; font-weight: 700; color: #7c3aed; margin-bottom: 10px;">🌙 Evening Session Schedule</h4>
                         <div class="form-group">
-                            <label class="form-label">PM Start Time</label>
+                            <label class="form-label">Evening Start Time</label>
                             <input type="time" name="settings[pm_start_time]" class="form-control" value="<?= e($pm_start) ?>" required>
                         </div>
                         <div class="form-group" style="margin-bottom: 0;">
-                            <label class="form-label">PM End Time</label>
+                            <label class="form-label">Evening End Time</label>
                             <input type="time" name="settings[pm_end_time]" class="form-control" value="<?= e($pm_end) ?>" required>
                         </div>
                     </div>

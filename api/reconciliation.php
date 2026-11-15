@@ -19,6 +19,12 @@ $pdo = getDBConnection();
 $user = current_user();
 
 try {
+    // Restrict all actions to past and present dates (future dates not allowed)
+    $inputDate = $_GET['date'] ?? $_POST['date'] ?? '';
+    if (!empty($inputDate) && $inputDate > date('Y-m-d')) {
+        json_response(['success' => false, 'message' => 'Future dates cannot be selected. Please choose today or a past date.'], 400);
+    }
+
     switch ($action) {
         /**
          * Fetch dashboard overview summary counts (Total, Pending, Completed)
@@ -65,10 +71,16 @@ try {
                     r.issue_reference,
                     COALESCE(r.refund_status, 'NONE') AS refund_status,
                     r.refund_reference,
+                    r.duplicate_receipt_no,
+                    r.duplicate_receipt_desc,
                     COALESCE(r.overall_remark, 'Pending') AS overall_remark,
                     r.custom_remark,
                     COALESCE(r.is_completed, 0) AS is_completed,
                     COALESCE(r.is_urgent, 0) AS is_urgent,
+                    r.completed_by,
+                    cu.username AS completed_by_user,
+                    cu.full_name AS completed_by_name,
+                    r.completed_at,
                     r.updated_at,
                     u.username AS updated_by_user,
                     uc.id AS urgent_case_id,
@@ -83,6 +95,8 @@ try {
                     AND r.session = :session
                 LEFT JOIN users u 
                     ON r.updated_by = u.id
+                LEFT JOIN users cu 
+                    ON r.completed_by = cu.id
                 LEFT JOIN urgent_cases uc 
                     ON uc.record_id = r.id
                 LEFT JOIN users ru 
@@ -469,6 +483,65 @@ try {
             break;
 
         /**
+         * Save Duplicate Receipt (Number and Description)
+         * Available for all users, admin and super admin
+         */
+        case 'save_duplicate_receipt':
+            require_csrf();
+            require_permission('manage_reconciliation', true);
+
+            $school_id = (int)($_POST['school_id'] ?? 0);
+            $date = $_POST['date'] ?? date('Y-m-d');
+            $session = $_POST['session'] ?? SESSION_AM;
+            $receipt_no = trim($_POST['receipt_no'] ?? '');
+            $receipt_desc = trim($_POST['receipt_desc'] ?? '');
+
+            if (!$school_id || (empty($receipt_no) && empty($receipt_desc))) {
+                json_response(['success' => false, 'message' => 'Please provide receipt number or description.'], 400);
+            }
+
+            $pdo->beginTransaction();
+
+            $rec = get_or_create_record($pdo, $school_id, $date, $session);
+            $prev_state = json_encode($rec);
+
+            if (!empty($rec['is_completed']) && !has_role(ROLE_SUPER_ADMIN)) {
+                $pdo->rollBack();
+                json_response(['success' => false, 'message' => 'This school reconciliation is completed. Only Super Admin can modify completed records.'], 403);
+            }
+
+            $upd = $pdo->prepare("
+                UPDATE reconciliation_records 
+                SET duplicate_receipt_no = :no,
+                    duplicate_receipt_desc = :desc,
+                    updated_by = :uid,
+                    updated_at = NOW()
+                WHERE id = :id
+            ");
+            $upd->execute([
+                ':no' => $receipt_no ?: null,
+                ':desc' => $receipt_desc ?: null,
+                ':uid' => $user['id'],
+                ':id' => $rec['id']
+            ]);
+
+            $new_rec = get_or_create_record($pdo, $school_id, $date, $session);
+            $new_state = json_encode($new_rec);
+
+            record_history($pdo, $rec['id'], $school_id, $date, $session, 'DUPLICATE_RECEIPT', $prev_state, $new_state, $user);
+
+            $pdo->commit();
+            log_activity('RECON_DUP_RECEIPT', "Saved Duplicate Receipt for School ID #{$school_id}: No={$receipt_no}");
+
+            json_response([
+                'success' => true,
+                'message' => 'Duplicate receipt saved successfully.',
+                'record' => $new_rec,
+                'summary' => get_reconciliation_summary($date, $session)
+            ]);
+            break;
+
+        /**
          * Save Custom Remark (varchar)
          * Dedicated for school reconciliation notes / remarks
          */
@@ -558,6 +631,8 @@ try {
                     UPDATE reconciliation_records 
                     SET is_completed = 1,
                         overall_remark = :remark,
+                        completed_by = :uid,
+                        completed_at = NOW(),
                         updated_by = :uid,
                         updated_at = NOW()
                     WHERE id = :id
@@ -580,6 +655,10 @@ try {
                         refund_status = 'NONE',
                         issue_reference = NULL,
                         refund_reference = NULL,
+                        duplicate_receipt_no = NULL,
+                        duplicate_receipt_desc = NULL,
+                        completed_by = NULL,
+                        completed_at = NULL,
                         updated_by = :uid,
                         updated_at = NOW()
                     WHERE id = :id

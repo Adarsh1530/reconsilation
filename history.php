@@ -24,9 +24,9 @@ include __DIR__ . '/includes/header.php';
     <div style="display: flex; align-items: center; gap: 10px;">
         <label for="historySessionFilter" style="font-size: 13px; font-weight: 600; color: var(--text-muted);">Session:</label>
         <select id="historySessionFilter" class="form-control" style="width: auto; padding: 6px 12px; font-size: 13px;">
-            <option value="">All Sessions (AM & PM)</option>
-            <option value="AM">AM Session</option>
-            <option value="PM">PM Session</option>
+            <option value="">All Sessions (Morning & Evening)</option>
+            <option value="AM">Morning Session</option>
+            <option value="PM">Evening Session</option>
         </select>
     </div>
 </div>

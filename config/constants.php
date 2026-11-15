@@ -9,6 +9,8 @@ define('APP_VERSION', '1.0.0');
 // Sessions
 define('SESSION_AM', 'AM');
 define('SESSION_PM', 'PM');
+define('SESSION_AM_LABEL', 'Morning Session');
+define('SESSION_PM_LABEL', 'Evening Session');
 
 // Roles
 define('ROLE_SUPER_ADMIN', 'super_admin');

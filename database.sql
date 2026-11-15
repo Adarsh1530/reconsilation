@@ -90,15 +90,20 @@ CREATE TABLE `reconciliation_records` (
     `issue_reference` VARCHAR(255) NULL,
     `refund_status` ENUM('NONE', 'PROCESSED') DEFAULT 'NONE',
     `refund_reference` VARCHAR(255) NULL,
+    `duplicate_receipt_no` VARCHAR(100) NULL,
+    `duplicate_receipt_desc` TEXT NULL,
     `overall_remark` VARCHAR(255) DEFAULT 'Pending',
     `custom_remark` VARCHAR(255) NULL,
     `is_completed` TINYINT(1) DEFAULT 0,
     `is_urgent` TINYINT(1) DEFAULT 0,
+    `completed_by` INT NULL,
+    `completed_at` DATETIME NULL,
     `updated_by` INT NULL,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     UNIQUE KEY `uk_school_date_session` (`school_id`, `record_date`, `session`),
     FOREIGN KEY (`school_id`) REFERENCES `schools`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`completed_by`) REFERENCES `users`(`id`) ON DELETE SET NULL,
     FOREIGN KEY (`updated_by`) REFERENCES `users`(`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
@@ -166,6 +171,19 @@ CREATE TABLE `activity_logs` (
     `ip_address` VARCHAR(45) NULL,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- 11. System Notifications table (Super Admin Announcements)
+CREATE TABLE IF NOT EXISTS `system_notifications` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `title` VARCHAR(150) NOT NULL,
+    `message` TEXT NOT NULL,
+    `type` ENUM('info', 'warning', 'urgent', 'success') DEFAULT 'info',
+    `is_active` TINYINT(1) DEFAULT 1,
+    `created_by` INT NOT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (`created_by`) REFERENCES `users`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 -- ============================================================================

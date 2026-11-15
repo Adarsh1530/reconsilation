@@ -14,16 +14,32 @@ let isWorkflowLocked = false;
 let recordsCache = [];
 let warningThreshold = 10;
 
+function getSessionDisplayName(sess) {
+    return sess === 'AM' ? 'Morning Session' : 'Evening Session';
+}
+
 function initDashboard() {
     // Read session & date from DOM elements if present
     const sessionInput = document.getElementById('currentSessionInput');
     if (sessionInput) currentSession = sessionInput.value;
 
     const dateInput = document.getElementById('workingDateInput');
+    const todayStr = new Date().toISOString().split('T')[0];
     if (dateInput) {
+        dateInput.max = todayStr;
         currentDate = dateInput.value;
+        if (currentDate > todayStr) {
+            currentDate = todayStr;
+            dateInput.value = todayStr;
+        }
         dateInput.addEventListener('change', (e) => {
-            currentDate = e.target.value;
+            if (e.target.value > todayStr) {
+                showToast('warning', 'Future Date Not Allowed', 'Future dates cannot be selected. Setting to today.');
+                e.target.value = todayStr;
+                currentDate = todayStr;
+            } else {
+                currentDate = e.target.value;
+            }
             loadSessionRecords();
         });
     }
@@ -31,6 +47,9 @@ function initDashboard() {
     // Read warning threshold
     const warnEl = document.getElementById('warningThresholdVal');
     if (warnEl) warningThreshold = parseInt(warnEl.value, 10) || 10;
+
+    // Notifications Module (Super Admin & All Users)
+    initNotifications();
 
     // Session Switcher Buttons
     const sessionBtns = document.querySelectorAll('.session-switch-btn');
@@ -103,7 +122,7 @@ function initDashboard() {
 }
 
 /**
- * Switch AM/PM Session
+ * Switch Morning/Evening Session
  */
 function switchSession(newSession) {
     currentSession = newSession;
@@ -126,14 +145,14 @@ function switchSession(newSession) {
     if (headerPill) {
         if (newSession === 'AM') {
             headerPill.className = 'session-pill-btn active am-pill';
-            headerPill.innerHTML = '☀️ AM Session';
+            headerPill.innerHTML = '☀️ Morning Session';
         } else {
             headerPill.className = 'session-pill-btn active pm-pill';
-            headerPill.innerHTML = '🌙 PM Session';
+            headerPill.innerHTML = '🌙 Evening Session';
         }
     }
 
-    showToast('info', 'Session Switched', `Loaded ${newSession} Session records for ${currentDate}.`);
+    showToast('info', 'Session Switched', `Loaded ${getSessionDisplayName(newSession)} records for ${currentDate}.`);
     loadSessionRecords();
 }
 
@@ -147,7 +166,7 @@ function loadSessionRecords() {
             <tr>
                 <td colspan="4" style="text-align:center; padding: 40px; color: var(--text-muted);">
                     <div style="display:inline-block; animation: spin 1s linear infinite; margin-bottom: 8px;">⏳</div>
-                    <div>Loading ${currentSession} session records...</div>
+                    <div>Loading ${getSessionDisplayName(currentSession)} records...</div>
                 </td>
             </tr>
         `;
@@ -197,7 +216,7 @@ function renderOverviewCards(summary) {
     if (completedEl) completedEl.textContent = summary.completed_count;
 
     subtextEls.forEach(el => {
-        el.textContent = `${currentSession} Session (${currentDate})`;
+        el.textContent = `${getSessionDisplayName(currentSession)} (${currentDate})`;
     });
 }
 
@@ -483,6 +502,47 @@ function renderMainTable(records) {
             `;
         }
 
+        // Duplicate receipt badge if recorded
+        let dupReceiptBadgeHtml = '';
+        if (rec.duplicate_receipt_no && rec.duplicate_receipt_no.trim() !== '') {
+            dupReceiptBadgeHtml = `
+                <span class="badge-dup-receipt" title="Duplicate Receipt: ${escapeHtml(rec.duplicate_receipt_no)}${rec.duplicate_receipt_desc ? ` - ${escapeHtml(rec.duplicate_receipt_desc)}` : ''}">
+                    📄 Dup: ${escapeHtml(rec.duplicate_receipt_no)}
+                </span>
+            `;
+        }
+
+        // Completion tracking: User – Date – Time (displayed on right side)
+        let completionTrackingHtml = '';
+        if (rec.is_completed == 1) {
+            const who = rec.completed_by_user || rec.updated_by_user || 'User';
+            let compDate = '';
+            let compTime = '';
+            const timeStr = rec.completed_at || rec.updated_at;
+            if (timeStr) {
+                const parts = timeStr.split(' ');
+                compDate = parts[0];
+                if (parts[1]) {
+                    const timeParts = parts[1].split(':');
+                    let h = parseInt(timeParts[0], 10);
+                    const m = timeParts[1];
+                    const ampm = h >= 12 ? 'PM' : 'AM';
+                    h = h % 12 || 12;
+                    const padH = h < 10 ? '0' + h : h;
+                    compTime = `${padH}:${m} ${ampm}`;
+                }
+            } else {
+                compDate = currentDate;
+            }
+            const formattedMeta = `${who} – ${compDate}${compTime ? ` – ${compTime}` : ''}`;
+            completionTrackingHtml = `
+                <div class="completion-tracking-pill" title="Completed by ${escapeHtml(rec.completed_by_name || who)} on ${escapeHtml(timeStr || compDate)}">
+                    <span>👤</span>
+                    <span>${escapeHtml(formattedMeta)}</span>
+                </div>
+            `;
+        }
+
         const authorTooltip = rec.updated_by_user ? `Updated by ${escapeHtml(rec.updated_by_user)}` : '';
         const finalTooltip = [tooltipText, authorTooltip].filter(Boolean).join(' | ');
 
@@ -504,9 +564,11 @@ function renderMainTable(records) {
                             <span class="status-badge ${badgeClass}" ${finalTooltip ? `title="${escapeHtml(finalTooltip)}"` : ''}>
                                 ${escapeHtml(remarkText)}
                             </span>
+                            ${dupReceiptBadgeHtml}
                             ${customRemarkHtml}
                         </div>
-                        <div style="display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; white-space: nowrap;">
+                        <div style="display: inline-flex; align-items: center; gap: 8px; flex-shrink: 0; white-space: nowrap;">
+                            ${completionTrackingHtml}
                             ${actionBtn}
                         </div>
                     </div>
@@ -667,7 +729,7 @@ function selectSchool(schoolId) {
 function renderWorkspace(rec) {
     document.getElementById('wsSchoolCode').textContent = rec.school_code;
     document.getElementById('wsSchoolName').textContent = rec.school_name;
-    document.getElementById('wsSchoolSession').textContent = `${currentSession} Session (${currentDate})`;
+    document.getElementById('wsSchoolSession').textContent = `${getSessionDisplayName(currentSession)} (${currentDate})`;
 
     // Workspace ERP Login button
     const wsErpBtn = document.getElementById('wsErpLoginBtn');
@@ -703,10 +765,16 @@ function renderWorkspace(rec) {
     const paymentPanel = document.getElementById('panelPayment');
     const reconPanel = document.getElementById('panelReconciliation');
     const refundPanel = document.getElementById('panelRefund');
+    const dupPanel = document.getElementById('panelDuplicateReceipt');
+    const dupNoInput = document.getElementById('wsDupReceiptNo');
+    const dupDescInput = document.getElementById('wsDupReceiptDesc');
+    const dupBtn = document.getElementById('btnSaveDupReceipt');
 
     // Reset fields first
     issueInput.value = rec.issue_reference || '';
     refundInput.value = rec.refund_reference || '';
+    if (dupNoInput) dupNoInput.value = rec.duplicate_receipt_no || '';
+    if (dupDescInput) dupDescInput.value = rec.duplicate_receipt_desc || '';
     const remarkInput = document.getElementById('wsRemarkInput');
     if (remarkInput) remarkInput.value = rec.custom_remark || '';
     if (urgentCheckbox) urgentCheckbox.checked = rec.is_urgent == 1;
@@ -738,10 +806,14 @@ function renderWorkspace(rec) {
         // Disable reconciliation and refund controls
         reconPanel.classList.add('disabled-panel');
         refundPanel.classList.add('disabled-panel');
+        if (dupPanel) dupPanel.classList.add('disabled-panel');
         issueBtn.disabled = true;
         issueInput.disabled = true;
         refundBtn.disabled = true;
         refundInput.disabled = true;
+        if (dupBtn) dupBtn.disabled = true;
+        if (dupNoInput) dupNoInput.disabled = true;
+        if (dupDescInput) dupDescInput.disabled = true;
     } else if (rec.payment_status === 'PAYMENT_SUCCESS') {
         paymentSuccessBtn.disabled = true;
         paymentSuccessBtn.textContent = '✓ Payment Success Selected';
@@ -750,10 +822,14 @@ function renderWorkspace(rec) {
         // Disable reconciliation and refund controls
         reconPanel.classList.add('disabled-panel');
         refundPanel.classList.add('disabled-panel');
+        if (dupPanel) dupPanel.classList.remove('disabled-panel');
         issueBtn.disabled = true;
         issueInput.disabled = true;
         refundBtn.disabled = true;
         refundInput.disabled = true;
+        if (dupBtn) dupBtn.disabled = false;
+        if (dupNoInput) dupNoInput.disabled = false;
+        if (dupDescInput) dupDescInput.disabled = false;
     } else {
         // Neither payment status selected yet
         noPaymentBtn.disabled = false;
@@ -763,10 +839,14 @@ function renderWorkspace(rec) {
 
         reconPanel.classList.remove('disabled-panel');
         refundPanel.classList.remove('disabled-panel');
+        if (dupPanel) dupPanel.classList.remove('disabled-panel');
         issueBtn.disabled = false;
         issueInput.disabled = false;
         refundBtn.disabled = false;
         refundInput.disabled = false;
+        if (dupBtn) dupBtn.disabled = false;
+        if (dupNoInput) dupNoInput.disabled = false;
+        if (dupDescInput) dupDescInput.disabled = false;
     }
 
     // Update workspace mark completed buttons
@@ -932,7 +1012,33 @@ function bindWorkspaceActions() {
         });
     }
 
-    // 4b. Save Remark Button (varchar)
+    // 4b. Save Duplicate Receipt Button
+    const dupReceiptBtn = document.getElementById('btnSaveDupReceipt');
+    if (dupReceiptBtn) {
+        dupReceiptBtn.addEventListener('click', () => {
+            if (!activeSchoolId) return;
+            const noInput = document.getElementById('wsDupReceiptNo');
+            const descInput = document.getElementById('wsDupReceiptDesc');
+            const receiptNo = noInput ? noInput.value.trim() : '';
+            const receiptDesc = descInput ? descInput.value.trim() : '';
+
+            if (!receiptNo && !receiptDesc) {
+                showToast('warning', 'Missing Details', 'Please enter duplicate receipt number or description.');
+                if (noInput) noInput.focus();
+                return;
+            }
+
+            postReconAction('save_duplicate_receipt', {
+                school_id: activeSchoolId,
+                date: currentDate,
+                session: currentSession,
+                receipt_no: receiptNo,
+                receipt_desc: receiptDesc
+            }, 'Saving duplicate receipt...');
+        });
+    }
+
+    // 5. Save Remark Button (varchar)
     const remarkBtn = document.getElementById('btnSaveRemark');
     if (remarkBtn) {
         remarkBtn.addEventListener('click', () => {
@@ -1235,6 +1341,253 @@ function filterTableRows(query) {
             row.style.display = '';
         } else {
             row.style.display = 'none';
+        }
+    });
+}
+
+/**
+ * ==========================================================================
+ * SUPER ADMIN NOTIFICATIONS MODULE (All users view, Super Admin publishes)
+ * ==========================================================================
+ */
+function initNotifications() {
+    fetchActiveNotifications();
+
+    const isSuperAdmin = document.getElementById('isSuperAdmin')?.value === '1';
+    const manageBtn = document.getElementById('btnManageNotifications');
+    const modalBackdrop = document.getElementById('notificationsModalBackdrop');
+    const closeBtn = document.getElementById('btnCloseNotificationModal');
+    const doneBtn = document.getElementById('btnDoneNotificationModal');
+    const publishForm = document.getElementById('notificationPublishForm');
+
+    if (isSuperAdmin && manageBtn && modalBackdrop) {
+        manageBtn.addEventListener('click', () => {
+            modalBackdrop.style.display = 'flex';
+            loadSuperAdminNotificationsList();
+        });
+
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => {
+                modalBackdrop.style.display = 'none';
+            });
+        }
+
+        if (doneBtn) {
+            doneBtn.addEventListener('click', () => {
+                modalBackdrop.style.display = 'none';
+            });
+        }
+
+        modalBackdrop.addEventListener('click', (e) => {
+            if (e.target === modalBackdrop) {
+                modalBackdrop.style.display = 'none';
+            }
+        });
+
+        if (publishForm) {
+            publishForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const title = document.getElementById('notifTitle')?.value.trim();
+                const message = document.getElementById('notifMessage')?.value.trim();
+                const type = document.getElementById('notifType')?.value || 'info';
+
+                if (!title || !message) {
+                    showToast('warning', 'Validation Error', 'Please provide both title and announcement message.');
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append('action', 'create');
+                formData.append('title', title);
+                formData.append('message', message);
+                formData.append('type', type);
+                formData.append('csrf_token', getCsrfToken());
+
+                fetch('api/notifications.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        showToast('success', 'Announcement Published', 'Notification is now prominently live for all users!');
+                        publishForm.reset();
+                        loadSuperAdminNotificationsList();
+                        fetchActiveNotifications();
+                    } else {
+                        showToast('error', 'Publish Failed', data.message || 'Could not publish announcement.');
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    showToast('error', 'Error', 'Failed to reach notifications API.');
+                });
+            });
+        }
+    }
+}
+
+function fetchActiveNotifications() {
+    const banner = document.getElementById('superAdminAnnouncementsBanner');
+    if (!banner) return;
+
+    fetch('api/notifications.php?action=get_active')
+        .then(res => res.json())
+        .then(res => {
+            if (res.success && res.data && res.data.length > 0) {
+                let html = '';
+                res.data.forEach(n => {
+                    let icon = 'ℹ️';
+                    let typeBadge = 'General Info';
+                    if (n.type === 'warning') {
+                        icon = '⚠️';
+                        typeBadge = 'Important Warning';
+                    } else if (n.type === 'urgent') {
+                        icon = '🚨';
+                        typeBadge = 'Urgent Priority';
+                    } else if (n.type === 'success') {
+                        icon = '✅';
+                        typeBadge = 'Official Notice';
+                    }
+
+                    const timeFormatted = n.created_at ? n.created_at.replace('T', ' ') : '';
+
+                    html += `
+                        <div class="announcement-card type-${escapeHtml(n.type)}">
+                            <div class="announcement-icon-badge">${icon}</div>
+                            <div class="announcement-content">
+                                <div class="announcement-title">
+                                    <span>${escapeHtml(n.title)}</span>
+                                    <span style="font-size: 11px; padding: 2px 7px; border-radius: 4px; background: rgba(0,0,0,0.07); font-weight: 700;">${typeBadge}</span>
+                                </div>
+                                <div class="announcement-message">${escapeHtml(n.message)}</div>
+                                <div class="announcement-meta">
+                                    <span>📣 Published by Super Admin (${escapeHtml(n.author_full_name || n.author_name)})</span>
+                                    <span>•</span>
+                                    <span>🕒 ${escapeHtml(timeFormatted)}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                banner.innerHTML = html;
+                banner.style.display = 'flex';
+            } else {
+                banner.innerHTML = '';
+                banner.style.display = 'none';
+            }
+        })
+        .catch(err => {
+            console.error('Active notifications fetch error:', err);
+        });
+}
+
+function loadSuperAdminNotificationsList() {
+    const listContainer = document.getElementById('notificationsManagerList');
+    if (!listContainer) return;
+
+    fetch('api/notifications.php?action=get_all')
+        .then(res => res.json())
+        .then(res => {
+            if (res.success && res.data) {
+                if (res.data.length === 0) {
+                    listContainer.innerHTML = '<p style="text-align: center; color: var(--text-muted); font-size: 13px; padding: 20px;">No announcements published yet.</p>';
+                    return;
+                }
+
+                let html = '<div style="display: flex; flex-direction: column; gap: 10px;">';
+                res.data.forEach(n => {
+                    const isActive = n.is_active == 1;
+
+                    html += `
+                        <div style="background: #ffffff; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                            <div style="flex-grow: 1;">
+                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                                    <strong style="font-size: 13.5px; color: var(--text-main);">${escapeHtml(n.title)}</strong>
+                                    <span style="font-size: 10.5px; padding: 2px 6px; border-radius: 4px; font-weight: 700; background: ${isActive ? '#dcfce7; color: #15803d;' : '#f1f5f9; color: #64748b;'}">
+                                        ${isActive ? 'Active (Live)' : 'Deactivated'}
+                                    </span>
+                                    <span style="font-size: 10.5px; padding: 2px 6px; border-radius: 4px; background: #e0e7ff; color: #4338ca; font-weight: 600;">
+                                        ${escapeHtml(n.type)}
+                                    </span>
+                                </div>
+                                <div style="font-size: 12.5px; color: var(--text-muted); max-height: 40px; overflow: hidden; text-overflow: ellipsis;">
+                                    ${escapeHtml(n.message)}
+                                </div>
+                                <div style="font-size: 11px; color: #94a3b8; margin-top: 4px;">
+                                    ${escapeHtml(n.created_at)} by ${escapeHtml(n.author_name)}
+                                </div>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
+                                <button type="button" class="btn btn-sm ${isActive ? 'btn-outline-secondary' : 'btn-outline-success'}" onclick="toggleNotificationStatus(${n.id}, ${isActive ? 0 : 1})">
+                                    ${isActive ? 'Deactivate' : 'Activate'}
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteNotificationPrompt(${n.id})">
+                                    Delete
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                listContainer.innerHTML = html;
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            listContainer.innerHTML = '<p style="color: #dc2626; font-size: 12px; padding: 10px;">Failed to load announcements.</p>';
+        });
+}
+
+function toggleNotificationStatus(id, newStatus) {
+    const formData = new FormData();
+    formData.append('action', 'toggle_status');
+    formData.append('id', id);
+    formData.append('is_active', newStatus);
+    formData.append('csrf_token', getCsrfToken());
+
+    fetch('api/notifications.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            showToast('info', 'Status Updated', 'Notification status updated.');
+            loadSuperAdminNotificationsList();
+            fetchActiveNotifications();
+        } else {
+            showToast('error', 'Error', data.message);
+        }
+    });
+}
+
+function deleteNotificationPrompt(id) {
+    confirmModal({
+        title: 'Delete Announcement',
+        message: 'Are you sure you want to delete this announcement? It will be removed permanently from all dashboards.',
+        confirmText: 'Delete',
+        confirmClass: 'btn-danger',
+        onConfirm: () => {
+            const formData = new FormData();
+            formData.append('action', 'delete');
+            formData.append('id', id);
+            formData.append('csrf_token', getCsrfToken());
+
+            fetch('api/notifications.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('success', 'Deleted', 'Notification removed.');
+                    loadSuperAdminNotificationsList();
+                    fetchActiveNotifications();
+                } else {
+                    showToast('error', 'Error', data.message);
+                }
+            });
         }
     });
 }
