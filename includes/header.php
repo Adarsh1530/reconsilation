@@ -70,12 +70,6 @@ $active_session = $_SESSION['active_session'] ?? (date('H') >= 14 ? SESSION_PM :
                     <?= e($user['role_name']) ?>
                 </span>
 
-                <?php if (has_role(ROLE_SUPER_ADMIN)): ?>
-                <button type="button" class="btn btn-sm btn-notification-manage" id="btnManageNotifications" title="Super Admin: Post or manage announcements for all users">
-                    📣 Announcements
-                </button>
-                <?php endif; ?>
-
                 <!-- Logout Link -->
                 <a href="logout.php" class="btn-logout" title="Secure Sign Out">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
