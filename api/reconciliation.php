@@ -631,15 +631,16 @@ try {
                     UPDATE reconciliation_records 
                     SET is_completed = 1,
                         overall_remark = :remark,
-                        completed_by = :uid,
+                        completed_by = :completed_by,
                         completed_at = NOW(),
-                        updated_by = :uid,
+                        updated_by = :updated_by,
                         updated_at = NOW()
                     WHERE id = :id
                 ");
                 $upd->execute([
                     ':remark' => $remark,
-                    ':uid' => $user['id'],
+                    ':completed_by' => $user['id'],
+                    ':updated_by' => $user['id'],
                     ':id' => $rec['id']
                 ]);
                 $msg = 'School marked as Completed.';
