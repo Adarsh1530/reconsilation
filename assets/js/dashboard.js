@@ -449,13 +449,10 @@ function renderMainTable(records) {
                 </div>
             `;
         } else {
-            // Pending task: regular Complete and Select buttons
+            // Pending task: only show Select button (Complete button is only shown after the task is completed)
             actionBtn = `
                 <div style="display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;">
                     ${adminResolveBtn}
-                    <button type="button" class="btn btn-sm btn-outline-success" onclick="event.stopPropagation(); toggleSchoolCompletion(${rec.school_id}, 1)" title="Check and mark this school as completed">
-                        ✓ Complete
-                    </button>
                     <button class="btn btn-sm btn-outline-secondary" onclick="handleSelectSchoolFromTable(${rec.school_id})">
                         Select
                     </button>
