@@ -73,9 +73,9 @@ include __DIR__ . '/includes/header.php';
 </div>
 
 <!-- ==========================================================================
-     FILTER CONTROLS BAR (ONE LINE ALIGNMENT, TEXT-BASED, BLACK)
+     FILTER CONTROLS BAR (ONE LINE ALIGNMENT, TEXT-BASED, BLACK, NO BACKGROUND)
      ========================================================================== -->
-<div style="display: flex; align-items: center; gap: 14px; flex-wrap: nowrap; overflow-x: auto; background: #ffffff; border: 1px solid #000000; border-radius: 6px; padding: 10px 16px; margin-bottom: 20px; width: 100%; box-sizing: border-box;">
+<div style="display: flex; align-items: center; gap: 14px; flex-wrap: nowrap; overflow-x: auto; background: transparent; border: none; padding: 0 2px; margin-bottom: 20px; width: 100%; box-sizing: border-box;">
     <!-- Session Filter -->
     <div style="display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; flex-shrink: 0;">
         <label for="filterSession" style="font-size: 13px; font-weight: 700; color: #000000; margin: 0;">Session:</label>
