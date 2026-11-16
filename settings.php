@@ -169,23 +169,15 @@ include __DIR__ . '/includes/header.php';
                     Allow Super Admin to clear database records when required. Shows a clear warning and requires password confirmation (<strong>reconsilation</strong>) before permanently deleting data.
                 </p>
 
-                <div style="background: #ffffff; border: 1px solid #fecaca; border-radius: var(--radius-md); padding: 16px; margin-bottom: 14px;">
-                    <div style="font-weight: 700; font-size: 13.5px; color: #991b1b; margin-bottom: 4px;">Clear Reconciliation & Task Records</div>
-                    <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 14px;">
-                        Permanently deletes all completed tasks, pending tasks, reconciliation records, task history, and urgent case records. Schools and user accounts will remain intact.
+                <div style="background: #ffffff; border: 1px solid #fecaca; border-radius: var(--radius-md); padding: 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;">
+                    <div>
+                        <div style="font-weight: 700; font-size: 13.5px; color: #991b1b; margin-bottom: 4px;">Clear Database Records</div>
+                        <div style="font-size: 12px; color: var(--text-muted);">
+                            Permanently clears database records including reconciliation tasks, task history, and urgent cases. Requires password confirmation (<code>reconsilation</code>).
+                        </div>
                     </div>
-                    <button type="button" class="btn btn-danger" onclick="promptClearData('recon_only')" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 700;">
-                        <span>⚠️</span> Clear Reconciliation Tasks Data
-                    </button>
-                </div>
-
-                <div style="background: #ffffff; border: 1px solid #fecaca; border-radius: var(--radius-md); padding: 16px;">
-                    <div style="font-weight: 700; font-size: 13.5px; color: #991b1b; margin-bottom: 4px;">Clear All Operational Records (Full Reset)</div>
-                    <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 14px;">
-                        Permanently deletes all reconciliation records, task history, urgent cases, announcements, and activity logs. Preserves Super Admin account and system settings.
-                    </div>
-                    <button type="button" class="btn btn-danger" onclick="promptClearData('full')" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 700; background: #991b1b; border-color: #7f1d1d;">
-                        <span>🔥</span> Clear All Operational Records
+                    <button type="button" class="btn btn-danger" onclick="promptClearData()" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 700; background: #dc2626; border-color: #b91c1c;">
+                        <span>🗑️</span> Clear Data
                     </button>
                 </div>
             </div>
@@ -302,20 +294,14 @@ function handleRestoreSubmit(e) {
 /**
  * Handle Clear Database Data with Warning & Password Confirmation
  */
-function promptClearData(scope) {
-    const isFull = scope === 'full';
-    const title = isFull ? '🔥 Confirm Complete Operational Data Reset' : '⚠️ Confirm Clear Reconciliation Records';
-    const scopeDesc = isFull
-        ? 'All reconciliation records, completed tasks, pending tasks, urgent cases, announcements, and activity logs will be permanently deleted. (Super Admin user and system settings will be preserved).'
-        : 'All completed tasks, pending tasks, urgent cases, and reconciliation audit history will be permanently deleted. Schools and user accounts will remain intact.';
-
+function promptClearData() {
     confirmModal({
-        title: title,
+        title: '⚠️ Confirm Clear Database Records',
         message: `
             <div style="font-size: 13.5px; line-height: 1.5;">
                 <div style="background: #fef2f2; border: 2px solid #f87171; border-radius: 8px; padding: 14px; color: #991b1b; margin-bottom: 14px;">
                     <div style="font-weight: 800; font-size: 14px; margin-bottom: 4px;">🚨 DANGER: PERMANENT DATA DELETION</div>
-                    <div>${scopeDesc}</div>
+                    <div>All completed tasks, pending tasks, reconciliation records, task history, and urgent case records will be permanently deleted. This action cannot be undone.</div>
                 </div>
                 <div style="margin-bottom: 12px;">
                     <label style="display: block; font-weight: 700; margin-bottom: 6px; color: var(--text-main);">
@@ -328,7 +314,7 @@ function promptClearData(scope) {
                 </div>
             </div>
         `,
-        confirmText: '⚠️ Permanently Delete Data',
+        confirmText: '⚠️ Permanently Clear Data',
         confirmClass: 'btn-danger',
         onConfirm: () => {
             const pw = document.getElementById('modalClearPasswordInput')?.value.trim();
@@ -340,7 +326,7 @@ function promptClearData(scope) {
             const formData = new FormData();
             formData.append('csrf_token', getCsrfToken());
             formData.append('password', pw);
-            formData.append('scope', scope);
+            formData.append('scope', 'clear_data');
 
             showToast('info', 'Clearing Data', 'Permanently clearing database records...');
 

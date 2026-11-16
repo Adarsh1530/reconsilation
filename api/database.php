@@ -102,25 +102,13 @@ try {
             $pdo->beginTransaction();
             $pdo->exec("SET FOREIGN_KEY_CHECKS = 0;");
 
-            if ($scope === 'recon_only') {
-                // Clear all reconciliation records, history, and urgent cases
-                $pdo->exec("TRUNCATE TABLE reconciliation_history;");
-                $pdo->exec("TRUNCATE TABLE urgent_cases;");
-                $pdo->exec("TRUNCATE TABLE reconciliation_records;");
+            // Clear all reconciliation records, task records, urgent cases, and history
+            $pdo->exec("TRUNCATE TABLE reconciliation_history;");
+            $pdo->exec("TRUNCATE TABLE urgent_cases;");
+            $pdo->exec("TRUNCATE TABLE reconciliation_records;");
 
-                $msg = 'All reconciliation records, task records, and urgent cases have been permanently cleared.';
-                $act = 'DB_CLEAR_RECON_DATA';
-            } else {
-                // Full operational data reset: clear records, urgent cases, history, notifications, activity logs
-                $pdo->exec("TRUNCATE TABLE reconciliation_history;");
-                $pdo->exec("TRUNCATE TABLE urgent_cases;");
-                $pdo->exec("TRUNCATE TABLE reconciliation_records;");
-                $pdo->exec("TRUNCATE TABLE system_notifications;");
-                $pdo->exec("TRUNCATE TABLE activity_logs;");
-
-                $msg = 'All operational records (reconciliation tasks, cases, history, announcements, and logs) have been permanently cleared.';
-                $act = 'DB_CLEAR_FULL_DATA';
-            }
+            $msg = 'Database records (reconciliation tasks, history, and urgent cases) have been permanently cleared.';
+            $act = 'DB_CLEAR_DATA';
 
             $pdo->exec("SET FOREIGN_KEY_CHECKS = 1;");
             $pdo->commit();
