@@ -478,13 +478,6 @@ function renderMainTable(records) {
             `;
         }
 
-        // Dedicated Duplicate Receipt column display: overview of number only
-        let dupDisplay = '<span style="color: #94a3b8; font-size: 12.5px; white-space: nowrap;">None</span>';
-        if (rec.duplicate_receipt_no && rec.duplicate_receipt_no.trim() !== '') {
-            const desc = rec.duplicate_receipt_desc ? ` - ${escapeHtml(rec.duplicate_receipt_desc)}` : '';
-            dupDisplay = `<strong style="font-family: monospace; font-size: 13px; color: #0284c7; white-space: nowrap;" title="Duplicate Receipt: ${escapeHtml(rec.duplicate_receipt_no)}${desc}">${escapeHtml(rec.duplicate_receipt_no)}</strong>`;
-        }
-
         // Completion tracking: User – Date – Time (displayed on right side)
         let completionTrackingHtml = '';
         if (rec.is_completed == 1) {
