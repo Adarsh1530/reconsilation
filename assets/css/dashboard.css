@@ -39,67 +39,77 @@
     flex-shrink: 0;
 }
 
-/* Marked Section: Active Selection Highlight Badge */
+/* Active Selection Highlight: Big Bold Black Text (Not a button) */
 .active-selection-highlight-badge {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    background: linear-gradient(135deg, #eff6ff 0%, #eef2ff 100%);
-    border: 1.5px solid #6366f1;
-    border-radius: var(--radius-lg);
-    padding: 4px 10px;
-    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.12);
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    padding: 2px 4px;
+    box-shadow: none;
     white-space: nowrap;
     flex-shrink: 0;
 }
 
 .highlight-badge-icon {
-    font-size: 14px;
+    font-size: 18px;
     display: inline-flex;
     align-items: center;
 }
 
 .highlight-badge-label {
-    font-size: 11px;
-    font-weight: 800;
-    color: #4338ca;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
+    display: none;
 }
 
 .highlight-badge-session {
-    font-size: 12px;
+    font-size: 20px;
     font-weight: 800;
-    color: #ffffff;
-    background: #2563eb;
-    padding: 3px 9px;
-    border-radius: 5px;
-    letter-spacing: 0.01em;
-    transition: background 0.2s ease;
-    box-shadow: 0 1px 4px rgba(37, 99, 235, 0.2);
+    color: #000000;
+    background: transparent !important;
+    padding: 0;
+    border-radius: 0;
+    letter-spacing: -0.01em;
+    transition: none;
+    box-shadow: none !important;
+    line-height: 1.2;
 }
 
 .highlight-badge-session.evening {
-    background: #7c3aed !important;
-    box-shadow: 0 1px 4px rgba(124, 58, 237, 0.2) !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    color: #000000 !important;
 }
 
 .highlight-badge-divider {
-    color: #818cf8;
+    color: #000000;
     font-weight: 800;
-    font-size: 13px;
+    font-size: 20px;
+    line-height: 1.2;
+    margin: 0 3px;
 }
 
 .highlight-badge-date {
-    font-size: 12px;
+    font-size: 20px;
     font-weight: 800;
-    color: #1e3a8a;
-    background: #ffffff;
-    border: 1px solid #a5b4fc;
-    padding: 3px 9px;
-    border-radius: 5px;
-    font-family: monospace, sans-serif;
-    letter-spacing: 0.02em;
+    color: #000000;
+    background: transparent !important;
+    border: none !important;
+    padding: 0;
+    border-radius: 0;
+    letter-spacing: -0.01em;
+    box-shadow: none !important;
+    font-family: inherit;
+    line-height: 1.2;
+}
+
+@media (max-width: 768px) {
+    .highlight-badge-session,
+    .highlight-badge-divider,
+    .highlight-badge-date {
+        font-size: 16px;
+    }
 }
 
 .session-bar-right-tools {
