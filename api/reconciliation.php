@@ -650,17 +650,25 @@ try {
                     $remark = (mb_strlen($issue_ref) > 10 || (is_numeric($issue_ref) && (float)$issue_ref > 10)) ? 'Urgent Cases' : 'Reconciliation Issue';
                 }
 
+                $recon_status = $has_issue ? 'ISSUE' : $rec['reconciliation_status'];
+                $final_issue_ref = $has_issue ? $issue_ref : $rec['issue_reference'];
+                $final_refund_status = $has_refund ? 'PROCESSED' : $rec['refund_status'];
+                $final_refund_ref = $has_refund ? $refund_ref : $rec['refund_reference'];
+                $final_dup_no = $has_dup ? $dup_no : $rec['duplicate_receipt_no'];
+                $final_dup_desc = $has_dup ? $dup_desc : $rec['duplicate_receipt_desc'];
+                $final_custom_rem = $has_custom ? $custom_rem : $rec['custom_remark'];
+
                 $upd = $pdo->prepare("
                     UPDATE reconciliation_records 
                     SET is_completed = 1,
                         overall_remark = :remark,
-                        reconciliation_status = CASE WHEN :has_issue = 1 THEN 'ISSUE' ELSE reconciliation_status END,
-                        issue_reference = CASE WHEN :has_issue = 1 THEN :issue_ref ELSE issue_reference END,
-                        refund_status = CASE WHEN :has_refund = 1 THEN 'PROCESSED' ELSE refund_status END,
-                        refund_reference = CASE WHEN :has_refund = 1 THEN :refund_ref ELSE refund_reference END,
-                        duplicate_receipt_no = CASE WHEN :has_dup = 1 THEN :dup_no ELSE duplicate_receipt_no END,
-                        duplicate_receipt_desc = CASE WHEN :has_dup = 1 THEN :dup_desc ELSE duplicate_receipt_desc END,
-                        custom_remark = CASE WHEN :has_custom = 1 THEN :custom_rem ELSE custom_remark END,
+                        reconciliation_status = :recon_status,
+                        issue_reference = :issue_ref,
+                        refund_status = :refund_status,
+                        refund_reference = :refund_ref,
+                        duplicate_receipt_no = :dup_no,
+                        duplicate_receipt_desc = :dup_desc,
+                        custom_remark = :custom_rem,
                         completed_by = :completed_by,
                         completed_at = NOW(),
                         updated_by = :updated_by,
@@ -669,15 +677,13 @@ try {
                 ");
                 $upd->execute([
                     ':remark' => $remark,
-                    ':has_issue' => $has_issue,
-                    ':issue_ref' => $issue_ref,
-                    ':has_refund' => $has_refund,
-                    ':refund_ref' => $refund_ref,
-                    ':has_dup' => $has_dup,
-                    ':dup_no' => $dup_no,
-                    ':dup_desc' => $dup_desc,
-                    ':has_custom' => $has_custom,
-                    ':custom_rem' => $custom_rem,
+                    ':recon_status' => $recon_status,
+                    ':issue_ref' => $final_issue_ref,
+                    ':refund_status' => $final_refund_status,
+                    ':refund_ref' => $final_refund_ref,
+                    ':dup_no' => $final_dup_no,
+                    ':dup_desc' => $final_dup_desc,
+                    ':custom_rem' => $final_custom_rem,
                     ':completed_by' => $user['id'],
                     ':updated_by' => $user['id'],
                     ':id' => $rec['id']
