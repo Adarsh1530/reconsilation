@@ -20,6 +20,25 @@ if (has_permission('access_urgent_cases')) {
         $open_urgent_count = (int)$stmt->fetchColumn();
     } catch (Exception $e) {}
 }
+
+// Get count of completed tasks for badge (visible to ALL roles)
+$completed_tasks_count = 0;
+try {
+    if (!isset($pdo)) {
+        $pdo = getDBConnection();
+    }
+    $cStmt = $pdo->query("
+        SELECT COUNT(*) 
+        FROM reconciliation_records 
+        WHERE is_completed = 1 
+          AND (record_date = CURRENT_DATE() OR DATE(completed_at) = CURRENT_DATE() OR DATE(updated_at) = CURRENT_DATE())
+    ");
+    $completed_tasks_count = (int)$cStmt->fetchColumn();
+    if ($completed_tasks_count === 0) {
+        $cStmt2 = $pdo->query("SELECT COUNT(*) FROM reconciliation_records WHERE is_completed = 1");
+        $completed_tasks_count = (int)$cStmt2->fetchColumn();
+    }
+} catch (Exception $e) {}
 ?>
 <aside class="app-sidebar">
     <div class="sidebar-header">
@@ -59,6 +78,20 @@ if (has_permission('access_urgent_cases')) {
                 <polyline points="10 9 9 9 8 9"></polyline>
             </svg>
             <span>Monthly Report</span>
+        </a>
+
+        <!-- Completed Tasks (Available for ALL roles) -->
+        <a href="completed_tasks.php" class="nav-link <?= ($current_page === 'completed_tasks.php') ? 'active' : '' ?>">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 11l3 3L22 4"></path>
+                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+            </svg>
+            <span>Completed Tasks</span>
+            <?php if ($completed_tasks_count > 0): ?>
+                <span class="nav-badge nav-badge-completed" id="completedTasksNavBadge"><?= $completed_tasks_count ?></span>
+            <?php else: ?>
+                <span class="nav-badge nav-badge-completed" id="completedTasksNavBadge" style="display: none;">0</span>
+            <?php endif; ?>
         </a>
 
         <!-- Urgent Cases (Admin & Super Admin) -->

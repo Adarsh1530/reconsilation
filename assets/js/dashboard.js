@@ -243,6 +243,14 @@ function renderOverviewCards(summary) {
     if (pendingEl) pendingEl.textContent = summary.pending_count;
     if (completedEl) completedEl.textContent = summary.completed_count;
 
+    // Update real-time count on the Completed Tasks sidebar badge
+    const completedBadge = document.getElementById('completedTasksNavBadge');
+    if (completedBadge) {
+        const count = parseInt(summary.completed_count || 0, 10);
+        completedBadge.textContent = count;
+        completedBadge.style.display = count > 0 ? 'inline-block' : 'none';
+    }
+
     subtextEls.forEach(el => {
         el.textContent = `${getSessionDisplayName(currentSession)} (${currentDate})`;
     });
@@ -294,26 +302,8 @@ function renderUrgentAlerts(records) {
             const isAbove10 = (r.issue_reference.length > warningThreshold) || (!isNaN(r.issue_reference) && parseFloat(r.issue_reference) > 10);
             const isResolved = (r.urgent_case_status === 'Resolved' || (r.overall_remark && r.overall_remark.startsWith('Resolved by')));
 
-            if (isResolved) {
-                // Resolved Alert for all users
-                const resolvedBy = r.urgent_resolved_by_user || r.updated_by_user || 'Admin';
-                html += `
-                    <div class="urgent-alert-card urgent-alert-resolved">
-                        <div class="urgent-alert-icon">✅</div>
-                        <div class="urgent-alert-body">
-                            <div class="urgent-alert-title">Reconciliation Issue Resolved</div>
-                            <div class="urgent-alert-desc">
-                                School: <strong>${escapeHtml(r.school_name)}</strong> &nbsp;|&nbsp; 
-                                Issue Count / Ref: <span class="urgent-count-pill resolved">${escapeHtml(r.issue_reference)}</span>
-                                — Successfully <strong>Resolved by ${escapeHtml(resolvedBy)}</strong>.
-                            </div>
-                        </div>
-                        <div>
-                            <span class="badge-resolved-tag">✓ Resolved</span>
-                        </div>
-                    </div>
-                `;
-            } else if (isAbove10 || r.is_urgent == 1) {
+            // Only show active unresolved alerts on the dashboard (completed/resolved tasks are in the Completed Tasks module)
+            if (!isResolved && (isAbove10 || r.is_urgent == 1)) {
                 // Open Escalation Alert for all users
                 html += `
                     <div class="urgent-alert-card urgent-alert-warning">
