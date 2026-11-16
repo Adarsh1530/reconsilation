@@ -51,7 +51,6 @@ try {
                     r.updated_at,
                     s.name AS school_name,
                     s.code AS school_code,
-                    s.city AS school_city,
                     COALESCE(cu.username, u.username, 'System') AS completed_by_user,
                     COALESCE(cu.full_name, u.full_name, 'System') AS completed_by_name,
                     COALESCE(cr.name, ur.name, 'User') AS completed_by_role,
