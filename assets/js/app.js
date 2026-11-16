@@ -290,13 +290,18 @@ window.closeSuperAdminNotificationsModal = function() {
 
 function initSuperAdminNotificationsModal() {
     const modalBackdrop = document.getElementById('notificationsModalBackdrop');
-    if (!modalBackdrop) return;
+    if (modalBackdrop) {
+        modalBackdrop.addEventListener('click', (e) => {
+            if (e.target === modalBackdrop) {
+                window.closeSuperAdminNotificationsModal();
+            }
+        });
+    }
 
-    modalBackdrop.addEventListener('click', (e) => {
-        if (e.target === modalBackdrop) {
-            window.closeSuperAdminNotificationsModal();
-        }
-    });
+    // Auto-load announcements list if present on the page (e.g. announcements.php)
+    if (document.getElementById('notificationsManagerList')) {
+        loadSuperAdminNotificationsList();
+    }
 
     const publishForm = document.getElementById('notificationPublishForm');
     if (publishForm) {
