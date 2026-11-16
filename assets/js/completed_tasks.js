@@ -23,8 +23,7 @@ function loadCompletedTasks() {
     if (tbody) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="6" style="text-align: center; padding: 40px; color: var(--text-muted);">
-                    <div style="display: inline-block; animation: spin 1s linear infinite; margin-bottom: 8px;">⏳</div>
+                <td colspan="8" style="text-align: center; padding: 40px; color: #000000;">
                     <div>Loading completed tasks log...</div>
                 </td>
             </tr>
@@ -52,7 +51,7 @@ function loadCompletedTasks() {
                 if (tbody) {
                     tbody.innerHTML = `
                         <tr>
-                            <td colspan="6" style="text-align: center; padding: 30px; color: #dc2626;">
+                            <td colspan="8" style="text-align: center; padding: 30px; color: #000000;">
                                 Failed to load completed tasks: ${escapeHtml(res.message || 'Unknown error')}
                             </td>
                         </tr>
@@ -65,7 +64,7 @@ function loadCompletedTasks() {
             if (tbody) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="6" style="text-align: center; padding: 30px; color: #dc2626;">
+                        <td colspan="8" style="text-align: center; padding: 30px; color: #000000;">
                             Network or server communication failure.
                         </td>
                     </tr>
@@ -124,10 +123,9 @@ function renderTasksTable(tasks) {
     if (!tasks || tasks.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="6" style="text-align: center; padding: 40px; color: var(--text-muted);">
-                    <div style="font-size: 28px; margin-bottom: 8px;">📋</div>
-                    <div style="font-size: 14px; font-weight: 600; color: var(--text-main);">No Completed Tasks Found</div>
-                    <div style="font-size: 12.5px; color: var(--text-muted); margin-top: 4px;">
+                <td colspan="8" style="text-align: center; padding: 40px; color: #000000;">
+                    <div style="font-size: 14px; font-weight: 700; color: #000000;">No Completed Tasks Found</div>
+                    <div style="font-size: 12.5px; color: #000000; margin-top: 4px;">
                         Try adjusting your filters or session selection above.
                     </div>
                 </td>
@@ -138,72 +136,20 @@ function renderTasksTable(tasks) {
 
     let html = '';
     tasks.forEach(t => {
-        const sessionBadge = t.session === 'PM' 
-            ? '<span style="background: #f3e8ff; color: #7c3aed; border: 1px solid #d8b4fe; padding: 2px 7px; border-radius: 4px; font-size: 11px; font-weight: 700;">🌙 Evening</span>'
-            : '<span style="background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; padding: 2px 7px; border-radius: 4px; font-size: 11px; font-weight: 700;">☀️ Morning</span>';
+        // 1. School Name in one line alignment, black text
+        const schoolCodeStr = t.school_code ? ` (${t.school_code})` : '';
+        const schoolDisplay = `${escapeHtml(t.school_name)}${escapeHtml(schoolCodeStr)}`;
 
-        // Format Date
-        let dateFormatted = t.record_date;
+        // 2. Session, Date & Time combined in one column in one line alignment, black text
+        const sessionName = t.session === 'PM' ? 'Evening' : 'Morning';
+        let dateFormatted = t.record_date || '';
         if (t.record_date && t.record_date.includes('-')) {
             const parts = t.record_date.split('-');
             if (parts.length === 3) dateFormatted = `${parts[2]}.${parts[1]}.${parts[0]}`;
         }
 
-        // Who completed it
-        const userName = t.completed_by_user || 'User';
-        const fullName = t.completed_by_name || '';
-        const roleName = t.completed_by_role || '';
-        const userDisplay = `
-            <div style="display: flex; align-items: center; gap: 8px;">
-                <div style="width: 28px; height: 28px; border-radius: 50%; background: #e0f2fe; color: #0369a1; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0;">
-                    ${escapeHtml(userName.charAt(0).toUpperCase())}
-                </div>
-                <div style="line-height: 1.25;">
-                    <div style="font-weight: 700; color: var(--text-main); font-size: 13px;">${escapeHtml(userName)}</div>
-                    <div style="font-size: 11px; color: var(--text-muted);">${escapeHtml(roleName || fullName || 'Staff')}</div>
-                </div>
-            </div>
-        `;
-
-        // Task Outcome Summary
-        let taskSummaryHtml = '';
-        if (t.payment_status === 'PAYMENT_SUCCESS') {
-            taskSummaryHtml += '<span class="status-badge" style="background: #dcfce7; color: #15803d; border: 1px solid #86efac; font-size: 11.5px; padding: 2px 8px; font-weight: 600;">✓ Payment Success</span> ';
-        } else if (t.payment_status === 'NO_PAYMENT') {
-            taskSummaryHtml += '<span class="status-badge" style="background: #eff6ff; color: #1d4ed8; border: 1px solid #93c5fd; font-size: 11.5px; padding: 2px 8px; font-weight: 600;">✓ No Payment</span> ';
-        }
-
-        if (t.issue_reference) {
-            taskSummaryHtml += `<span class="status-badge" style="background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; font-size: 11.5px; padding: 2px 8px; font-weight: 600;">Issue: ${escapeHtml(t.issue_reference)}</span> `;
-        }
-
-        if (t.refund_reference) {
-            taskSummaryHtml += `<span class="status-badge" style="background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; font-size: 11.5px; padding: 2px 8px; font-weight: 600;">Refund: ${escapeHtml(t.refund_reference)}</span> `;
-        }
-
-        if (t.duplicate_receipt_no) {
-            taskSummaryHtml += `<span class="status-badge" style="background: #e0f2fe; color: #075985; border: 1px solid #7dd3fc; font-size: 11.5px; padding: 2px 8px; font-weight: 600;">Dup: ${escapeHtml(t.duplicate_receipt_no)}</span> `;
-        }
-
-        // Resolved indicator
-        if (t.urgent_case_status === 'Resolved' || (t.overall_remark && t.overall_remark.startsWith('Resolved by'))) {
-            const resBy = t.urgent_resolved_by_user || 'Admin';
-            taskSummaryHtml += `<div style="margin-top: 4px;"><span style="background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; border-radius: 4px; padding: 1px 6px; font-size: 11px; font-weight: 700;">✓ Resolved by ${escapeHtml(resBy)}</span></div>`;
-        }
-
-        if (!taskSummaryHtml) {
-            taskSummaryHtml = '<span style="color: var(--text-muted); font-style: italic; font-size: 12px;">Completed without issues</span>';
-        }
-
-        // Remarks
-        const remarkText = t.custom_remark || (t.overall_remark !== 'Completed' && t.overall_remark !== 'Pending' ? t.overall_remark : '');
-        const remarkHtml = remarkText 
-            ? `<div style="font-size: 12.5px; color: var(--text-main); font-weight: 500;">${escapeHtml(remarkText)}</div>`
-            : '<span style="color: var(--text-muted); font-style: italic; font-size: 12px;">None</span>';
-
-        // Time
         const timeStr = t.completed_at || t.updated_at || '';
-        let formattedTime = timeStr;
+        let formattedTime = '';
         if (timeStr && timeStr.includes(' ')) {
             const [dPart, tPart] = timeStr.split(' ');
             if (tPart) {
@@ -212,38 +158,68 @@ function renderTasksTable(tasks) {
                 const ampm = hour >= 12 ? 'PM' : 'AM';
                 hour = hour % 12 || 12;
                 const padH = hour < 10 ? '0' + hour : hour;
-                formattedTime = `${dPart} ${padH}:${m} ${ampm}`;
+                formattedTime = `${padH}:${m} ${ampm}`;
             }
         }
+        const sessionDateTimeDisplay = formattedTime 
+            ? `${sessionName} - ${dateFormatted} ${formattedTime}`
+            : `${sessionName} - ${dateFormatted}`;
+
+        // 3. Completed By: ONLY the username, in one line alignment, black text
+        const completedUsername = t.completed_by_user || 'None';
+
+        // 4. Reconciliation: ONLY the number/reference entered (or None), black text
+        const reconVal = (t.issue_reference && t.issue_reference.trim() !== '') ? t.issue_reference.trim() : 'None';
+
+        // 5. Refund: ONLY the number/reference entered (or None), black text
+        const refundVal = (t.refund_reference && t.refund_reference.trim() !== '') ? t.refund_reference.trim() : 'None';
+
+        // 6. Duplicate: ONLY the number/reference entered (or None), black text
+        const dupVal = (t.duplicate_receipt_no && t.duplicate_receipt_no.trim() !== '') ? t.duplicate_receipt_no.trim() : 'None';
+
+        // 7. Remarks: manually entered remark as entered by user (or None), black text
+        let rawRemark = t.custom_remark;
+        if (!rawRemark || rawRemark.trim() === '') {
+            if (t.overall_remark && t.overall_remark !== 'Completed' && t.overall_remark !== 'Pending') {
+                rawRemark = t.overall_remark;
+            }
+        }
+        const remarkVal = (rawRemark && rawRemark.trim() !== '') ? rawRemark.trim() : 'None';
+
+        // 8. Action: View Details button showing ONLY eye icon (clean black SVG, no text, no emoji)
+        const eyeIconSvg = `
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+        `;
 
         html += `
-            <tr>
-                <td>
-                    <div style="font-weight: 700; color: var(--text-main); font-size: 13.5px;">${escapeHtml(t.school_name)}</div>
-                    <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">
-                        <span style="font-family: monospace; background: #f1f5f9; padding: 1px 5px; border-radius: 3px;">${escapeHtml(t.school_code || '')}</span>
-                        ${t.school_city ? ` &bull; ${escapeHtml(t.school_city)}` : ''}
-                    </div>
+            <tr style="border-bottom: 1px solid #e5e7eb;">
+                <td style="padding: 10px 12px; color: #000000; font-size: 13px; font-weight: 600; white-space: nowrap;">
+                    ${escapeHtml(schoolDisplay)}
                 </td>
-                <td>
-                    <div style="margin-bottom: 3px;">${sessionBadge}</div>
-                    <div style="font-size: 12px; font-weight: 600; color: var(--text-main);">${escapeHtml(dateFormatted)}</div>
+                <td style="padding: 10px 12px; color: #000000; font-size: 13px; white-space: nowrap;">
+                    ${escapeHtml(sessionDateTimeDisplay)}
                 </td>
-                <td>
-                    ${userDisplay}
-                    <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
-                        🕒 ${escapeHtml(formattedTime)}
-                    </div>
+                <td style="padding: 10px 12px; color: #000000; font-size: 13px; font-weight: 600; white-space: nowrap;">
+                    ${escapeHtml(completedUsername)}
                 </td>
-                <td>
-                    ${taskSummaryHtml}
+                <td style="padding: 10px 12px; color: #000000; font-size: 13px; white-space: nowrap;">
+                    ${escapeHtml(reconVal)}
                 </td>
-                <td>
-                    ${remarkHtml}
+                <td style="padding: 10px 12px; color: #000000; font-size: 13px; white-space: nowrap;">
+                    ${escapeHtml(refundVal)}
                 </td>
-                <td style="text-align: right;">
-                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="viewTaskDetails(${t.id})" style="padding: 4px 10px; font-size: 12px;" title="View complete task audit details">
-                        👁️ View Details
+                <td style="padding: 10px 12px; color: #000000; font-size: 13px; white-space: nowrap;">
+                    ${escapeHtml(dupVal)}
+                </td>
+                <td style="padding: 10px 12px; color: #000000; font-size: 13px; white-space: nowrap; max-width: 260px; overflow: hidden; text-overflow: ellipsis;" title="${escapeHtml(remarkVal)}">
+                    ${escapeHtml(remarkVal)}
+                </td>
+                <td style="padding: 10px 12px; text-align: center; white-space: nowrap;">
+                    <button type="button" class="btn btn-sm" onclick="viewTaskDetails(${t.id})" title="View Details" style="background: transparent; border: 1px solid #000000; border-radius: 4px; padding: 4px 8px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; color: #000000;">
+                        ${eyeIconSvg}
                     </button>
                 </td>
             </tr>
@@ -266,91 +242,55 @@ function viewTaskDetails(recordId) {
     const modal = document.getElementById('taskDetailsModal');
 
     if (modalTitle) {
-        modalTitle.textContent = `${rec.school_name} — Completed Task Details`;
+        modalTitle.textContent = `${rec.school_name} — Task Details`;
     }
 
-    let paymentBadge = '<span style="color: #64748b; font-style: italic;">None</span>';
-    if (rec.payment_status === 'PAYMENT_SUCCESS') {
-        paymentBadge = '<span style="color: #15803d; font-weight: 700;">✓ Payment Success</span>';
-    } else if (rec.payment_status === 'NO_PAYMENT') {
-        paymentBadge = '<span style="color: #1d4ed8; font-weight: 700;">✓ No Payment</span>';
-    }
-
-    const issueVal = rec.issue_reference ? `<strong style="color: #b91c1c;">${escapeHtml(rec.issue_reference)}</strong>` : '<span style="color: #94a3b8; font-style: italic;">None</span>';
-    const refundVal = rec.refund_reference ? `<strong style="color: #d97706;">${escapeHtml(rec.refund_reference)}</strong>` : '<span style="color: #94a3b8; font-style: italic;">None</span>';
-    
-    let dupVal = '<span style="color: #94a3b8; font-style: italic;">None</span>';
-    if (rec.duplicate_receipt_no) {
-        dupVal = `<strong style="color: #0284c7;">${escapeHtml(rec.duplicate_receipt_no)}</strong>`;
-        if (rec.duplicate_receipt_desc) {
-            dupVal += ` <span style="color: #64748b; font-size: 12px;">(${escapeHtml(rec.duplicate_receipt_desc)})</span>`;
-        }
-    }
-
-    const remarkVal = rec.custom_remark ? `<span style="color: #047857; font-weight: 500;">${escapeHtml(rec.custom_remark)}</span>` : '<span style="color: #94a3b8; font-style: italic;">None</span>';
-    const completedUser = rec.completed_by_user || 'System';
-    const completedRole = rec.completed_by_role ? ` (${rec.completed_by_role})` : '';
+    const sessionName = rec.session === 'PM' ? 'Evening Session' : 'Morning Session';
+    const issueVal = (rec.issue_reference && rec.issue_reference.trim() !== '') ? escapeHtml(rec.issue_reference.trim()) : 'None';
+    const refundVal = (rec.refund_reference && rec.refund_reference.trim() !== '') ? escapeHtml(rec.refund_reference.trim()) : 'None';
+    const dupVal = (rec.duplicate_receipt_no && rec.duplicate_receipt_no.trim() !== '') ? escapeHtml(rec.duplicate_receipt_no.trim()) : 'None';
+    const remarkVal = (rec.custom_remark && rec.custom_remark.trim() !== '') ? escapeHtml(rec.custom_remark.trim()) : 'None';
+    const completedUser = rec.completed_by_user || 'None';
     const completedTime = rec.completed_at || rec.updated_at || '';
-
-    let resolutionHtml = '';
-    if (rec.urgent_case_status === 'Resolved' || (rec.overall_remark && rec.overall_remark.startsWith('Resolved by'))) {
-        const resBy = rec.urgent_resolved_by_user || 'Admin';
-        const resTime = rec.urgent_resolved_at ? ` on ${rec.urgent_resolved_at}` : '';
-        resolutionHtml = `
-            <tr style="border-bottom: 1px solid #f1f5f9; background: #f0fdf4;">
-                <td style="padding: 7px 8px; font-weight: 700; color: #166534;">Admin Resolution:</td>
-                <td style="padding: 7px 8px; color: #166534; font-weight: 600;">✓ Resolved by ${escapeHtml(resBy)}${escapeHtml(resTime)}</td>
-            </tr>
-        `;
-    }
 
     if (modalBody) {
         modalBody.innerHTML = `
-            <div style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 8px; padding: 12px 14px; margin-bottom: 14px;">
-                <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+            <div style="background: #ffffff; border: 1px solid #000000; border-radius: 6px; padding: 14px; margin-bottom: 14px;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 13px; color: #000000;">
                     <tbody>
-                        <tr style="border-bottom: 1px solid #f1f5f9;">
-                            <td style="padding: 6px 4px; font-weight: 600; color: #475569; width: 40%;">School:</td>
-                            <td style="padding: 6px 4px; font-weight: 700; color: #0f172a;">${escapeHtml(rec.school_name)} (${escapeHtml(rec.school_code || '')})</td>
+                        <tr style="border-bottom: 1px solid #e5e7eb;">
+                            <td style="padding: 6px 4px; font-weight: 700; width: 40%; color: #000000;">School Name:</td>
+                            <td style="padding: 6px 4px; color: #000000;">${escapeHtml(rec.school_name)} (${escapeHtml(rec.school_code || '')})</td>
                         </tr>
-                        <tr style="border-bottom: 1px solid #f1f5f9;">
-                            <td style="padding: 6px 4px; font-weight: 600; color: #475569;">Working Session:</td>
-                            <td style="padding: 6px 4px; color: #0f172a;">${rec.session === 'PM' ? '🌙 Evening Session' : '☀️ Morning Session'} (${escapeHtml(rec.record_date)})</td>
+                        <tr style="border-bottom: 1px solid #e5e7eb;">
+                            <td style="padding: 6px 4px; font-weight: 700; color: #000000;">Session, Date & Time:</td>
+                            <td style="padding: 6px 4px; color: #000000;">${sessionName} - ${escapeHtml(rec.record_date || '')} ${escapeHtml(completedTime)}</td>
                         </tr>
-                        <tr style="border-bottom: 1px solid #f1f5f9;">
-                            <td style="padding: 6px 4px; font-weight: 600; color: #475569;">Payment Status:</td>
-                            <td style="padding: 6px 4px;">${paymentBadge}</td>
+                        <tr style="border-bottom: 1px solid #e5e7eb;">
+                            <td style="padding: 6px 4px; font-weight: 700; color: #000000;">Completed By:</td>
+                            <td style="padding: 6px 4px; color: #000000; font-weight: 600;">${escapeHtml(completedUser)}</td>
                         </tr>
-                        <tr style="border-bottom: 1px solid #f1f5f9;">
-                            <td style="padding: 6px 4px; font-weight: 600; color: #475569;">Reconciliation Issue:</td>
-                            <td style="padding: 6px 4px;">${issueVal}</td>
+                        <tr style="border-bottom: 1px solid #e5e7eb;">
+                            <td style="padding: 6px 4px; font-weight: 700; color: #000000;">Reconciliation:</td>
+                            <td style="padding: 6px 4px; color: #000000;">${issueVal}</td>
                         </tr>
-                        <tr style="border-bottom: 1px solid #f1f5f9;">
-                            <td style="padding: 6px 4px; font-weight: 600; color: #475569;">Refund Reference:</td>
-                            <td style="padding: 6px 4px;">${refundVal}</td>
+                        <tr style="border-bottom: 1px solid #e5e7eb;">
+                            <td style="padding: 6px 4px; font-weight: 700; color: #000000;">Refund:</td>
+                            <td style="padding: 6px 4px; color: #000000;">${refundVal}</td>
                         </tr>
-                        <tr style="border-bottom: 1px solid #f1f5f9;">
-                            <td style="padding: 6px 4px; font-weight: 600; color: #475569;">Duplicate Receipt:</td>
-                            <td style="padding: 6px 4px;">${dupVal}</td>
-                        </tr>
-                        <tr style="border-bottom: 1px solid #f1f5f9;">
-                            <td style="padding: 6px 4px; font-weight: 600; color: #475569;">Custom Remark:</td>
-                            <td style="padding: 6px 4px;">${remarkVal}</td>
-                        </tr>
-                        ${resolutionHtml}
-                        <tr>
-                            <td style="padding: 6px 4px; font-weight: 600; color: #475569;">Completed By:</td>
-                            <td style="padding: 6px 4px; color: #0f172a;">👤 <strong>${escapeHtml(completedUser)}</strong>${escapeHtml(completedRole)}</td>
+                        <tr style="border-bottom: 1px solid #e5e7eb;">
+                            <td style="padding: 6px 4px; font-weight: 700; color: #000000;">Duplicate:</td>
+                            <td style="padding: 6px 4px; color: #000000;">${dupVal}</td>
                         </tr>
                         <tr>
-                            <td style="padding: 6px 4px; font-weight: 600; color: #475569;">Timestamp:</td>
-                            <td style="padding: 6px 4px; color: #64748b; font-size: 12px;">🕒 ${escapeHtml(completedTime)}</td>
+                            <td style="padding: 6px 4px; font-weight: 700; color: #000000;">Remarks:</td>
+                            <td style="padding: 6px 4px; color: #000000;">${remarkVal}</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
-            <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; padding: 10px 12px; color: #166534; font-size: 12px;">
-                ✓ This task has been verified and registered into the system audit trail.
+            <div style="border: 1px solid #000000; border-radius: 4px; padding: 8px 12px; color: #000000; font-size: 12px; font-weight: 600;">
+                Task verified and recorded in reconciliation log.
             </div>
         `;
     }

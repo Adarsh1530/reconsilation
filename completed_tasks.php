@@ -73,36 +73,40 @@ include __DIR__ . '/includes/header.php';
 </div>
 
 <!-- ==========================================================================
-     FILTER CONTROLS BAR
+     FILTER CONTROLS BAR (ONE LINE ALIGNMENT, TEXT-BASED, BLACK)
      ========================================================================== -->
-<div class="session-control-bar" style="margin-bottom: 20px; flex-wrap: wrap; gap: 12px; justify-content: flex-start;">
-    <div style="display: flex; align-items: center; gap: 8px;">
-        <label for="filterSession" style="font-size: 13px; font-weight: 700; color: var(--text-main);">Session:</label>
-        <select id="filterSession" class="form-control" style="width: auto; padding: 6px 12px; font-size: 13px;" onchange="loadCompletedTasks()">
+<div style="display: flex; align-items: center; gap: 14px; flex-wrap: nowrap; overflow-x: auto; background: #ffffff; border: 1px solid #000000; border-radius: 6px; padding: 10px 16px; margin-bottom: 20px; width: 100%; box-sizing: border-box;">
+    <!-- Session Filter -->
+    <div style="display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; flex-shrink: 0;">
+        <label for="filterSession" style="font-size: 13px; font-weight: 700; color: #000000; margin: 0;">Session:</label>
+        <select id="filterSession" class="form-control" style="width: auto; min-width: 170px; height: 34px; padding: 4px 8px; font-size: 13px; color: #000000; border: 1px solid #000000; border-radius: 4px;" onchange="loadCompletedTasks()">
             <option value="">All Sessions (AM & PM)</option>
             <option value="AM">Morning Session</option>
             <option value="PM">Evening Session</option>
         </select>
     </div>
 
-    <div style="display: flex; align-items: center; gap: 8px;">
-        <label for="filterDate" style="font-size: 13px; font-weight: 700; color: var(--text-main);">Date:</label>
-        <input type="date" id="filterDate" class="form-control" style="width: auto; padding: 6px 12px; font-size: 13px;" onchange="loadCompletedTasks()">
-        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearDateFilter()" title="Show all dates">
+    <!-- Date Filter -->
+    <div style="display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; flex-shrink: 0;">
+        <label for="filterDate" style="font-size: 13px; font-weight: 700; color: #000000; margin: 0;">Date:</label>
+        <input type="date" id="filterDate" class="form-control" style="width: auto; height: 34px; padding: 4px 8px; font-size: 13px; color: #000000; border: 1px solid #000000; border-radius: 4px;" onchange="loadCompletedTasks()">
+        <button type="button" class="btn btn-sm" onclick="clearDateFilter()" style="height: 34px; padding: 0 10px; font-size: 12px; font-weight: 700; color: #000000; background: #ffffff; border: 1px solid #000000; border-radius: 4px; cursor: pointer;">
             Clear Date
         </button>
     </div>
 
-    <div style="display: flex; align-items: center; gap: 8px;">
-        <label for="filterUser" style="font-size: 13px; font-weight: 700; color: var(--text-main);">Completed By:</label>
-        <select id="filterUser" class="form-control" style="width: auto; padding: 6px 12px; font-size: 13px;" onchange="loadCompletedTasks()">
+    <!-- Completed By Filter -->
+    <div style="display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; flex-shrink: 0;">
+        <label for="filterUser" style="font-size: 13px; font-weight: 700; color: #000000; margin: 0;">Completed By:</label>
+        <select id="filterUser" class="form-control" style="width: auto; min-width: 150px; height: 34px; padding: 4px 8px; font-size: 13px; color: #000000; border: 1px solid #000000; border-radius: 4px;" onchange="loadCompletedTasks()">
             <option value="">All Users / Staff</option>
             <!-- Populated dynamically via JS -->
         </select>
     </div>
 
-    <div style="margin-left: auto; display: flex; align-items: center; gap: 8px; min-width: 240px;">
-        <input type="text" id="filterSearch" class="form-control" placeholder="Search school, ref, notes..." style="padding: 6px 14px; font-size: 13px;" onkeyup="handleSearchKeyup(event)">
+    <!-- Search Input -->
+    <div style="display: inline-flex; align-items: center; gap: 6px; flex: 1; min-width: 200px;">
+        <input type="text" id="filterSearch" class="form-control" placeholder="Search school, ref, notes..." style="width: 100%; height: 34px; padding: 4px 10px; font-size: 13px; color: #000000; border: 1px solid #000000; border-radius: 4px;" onkeyup="handleSearchKeyup(event)">
     </div>
 </div>
 
@@ -112,30 +116,31 @@ include __DIR__ . '/includes/header.php';
 <div class="table-card">
     <div class="card-header" style="display: flex; align-items: center; justify-content: space-between;">
         <div>
-            <h2 class="card-title">Completed Reconciliation Log</h2>
-            <p class="card-subtitle">Showing details of who performed the reconciliation, what was entered, and timestamps.</p>
+            <h2 class="card-title" style="color: #000000; font-weight: 800;">Completed Reconciliation Log</h2>
+            <p class="card-subtitle" style="color: #000000;">Showing details of who performed the reconciliation, what was entered, and timestamps.</p>
         </div>
-        <div id="tableRecordCount" style="font-size: 12.5px; font-weight: 700; color: var(--text-muted);">
+        <div id="tableRecordCount" style="font-size: 12.5px; font-weight: 700; color: #000000;">
             Showing 0 records
         </div>
     </div>
 
     <div class="table-responsive">
-        <table class="data-table">
+        <table class="data-table" style="width: 100%; border-collapse: collapse;">
             <thead>
-                <tr>
-                    <th style="width: 22%;">School Name</th>
-                    <th style="width: 14%;">Session & Date</th>
-                    <th style="width: 18%;">Completed By</th>
-                    <th style="width: 18%;">Task Summary</th>
-                    <th style="width: 14%;">Remarks / Notes</th>
-                    <th style="width: 14%; text-align: right;">Action</th>
+                <tr style="border-bottom: 2px solid #000000; background: #f8fafc;">
+                    <th style="padding: 10px 12px; color: #000000; font-weight: 700; font-size: 12.5px; text-transform: uppercase; white-space: nowrap; text-align: left;">School Name</th>
+                    <th style="padding: 10px 12px; color: #000000; font-weight: 700; font-size: 12.5px; text-transform: uppercase; white-space: nowrap; text-align: left;">Session, Date & Time</th>
+                    <th style="padding: 10px 12px; color: #000000; font-weight: 700; font-size: 12.5px; text-transform: uppercase; white-space: nowrap; text-align: left;">Completed By</th>
+                    <th style="padding: 10px 12px; color: #000000; font-weight: 700; font-size: 12.5px; text-transform: uppercase; white-space: nowrap; text-align: left;">Reconciliation</th>
+                    <th style="padding: 10px 12px; color: #000000; font-weight: 700; font-size: 12.5px; text-transform: uppercase; white-space: nowrap; text-align: left;">Refund</th>
+                    <th style="padding: 10px 12px; color: #000000; font-weight: 700; font-size: 12.5px; text-transform: uppercase; white-space: nowrap; text-align: left;">Duplicate</th>
+                    <th style="padding: 10px 12px; color: #000000; font-weight: 700; font-size: 12.5px; text-transform: uppercase; white-space: nowrap; text-align: left;">Remarks</th>
+                    <th style="padding: 10px 12px; color: #000000; font-weight: 700; font-size: 12.5px; text-transform: uppercase; white-space: nowrap; text-align: center;">Action</th>
                 </tr>
             </thead>
             <tbody id="completedTasksTableBody">
                 <tr>
-                    <td colspan="6" style="text-align: center; padding: 40px; color: var(--text-muted);">
-                        <div style="display: inline-block; animation: spin 1s linear infinite; margin-bottom: 8px;">⏳</div>
+                    <td colspan="8" style="text-align: center; padding: 40px; color: #000000;">
                         <div>Loading completed tasks log...</div>
                     </td>
                 </tr>
