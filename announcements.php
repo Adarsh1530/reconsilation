@@ -72,7 +72,7 @@ include __DIR__ . '/includes/header.php';
                     <label class="form-label" for="notifType" style="margin-bottom: 0; font-weight: 700; font-size: 13px;">Notification Type:</label>
                     <select id="notifType" class="form-control" style="width: auto; min-width: 220px; padding: 6px 12px; font-size: 13px;">
                         <option value="info">ℹ️ General Info (Blue)</option>
-                        <option value="warning" selected>⚠️ Important Warning (Amber)</option>
+                        <option value="warning" selected>⚠️ Important Notice (Amber)</option>
                         <option value="urgent">🚨 Urgent Priority (Red)</option>
                         <option value="success">✅ Notice / Success (Green)</option>
                     </select>

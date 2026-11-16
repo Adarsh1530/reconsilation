@@ -1393,7 +1393,7 @@ function fetchActiveNotifications() {
                     let typeBadge = 'General Info';
                     if (n.type === 'warning') {
                         icon = '⚠️';
-                        typeBadge = 'Important Warning';
+                        typeBadge = 'Important Notice';
                     } else if (n.type === 'urgent') {
                         icon = '🚨';
                         typeBadge = 'Urgent Priority';
