@@ -230,7 +230,7 @@ function renderTasksTable(tasks) {
 }
 
 /**
- * Open task details modal
+ * Open task details modal (Popup only, single close icon button)
  */
 function viewTaskDetails(recordId) {
     const rec = completedTasksCache.find(t => parseInt(t.id, 10) === parseInt(recordId, 10));
@@ -239,72 +239,123 @@ function viewTaskDetails(recordId) {
     const modalTitle = document.getElementById('taskDetailsTitle');
     const modalBody = document.getElementById('taskDetailsBody');
     const backdrop = document.getElementById('taskDetailsModalBackdrop');
-    const modal = document.getElementById('taskDetailsModal');
 
     if (modalTitle) {
-        modalTitle.textContent = `${rec.school_name} — Task Details`;
+        const schoolCodeStr = rec.school_code ? ` (${rec.school_code})` : '';
+        modalTitle.textContent = `${rec.school_name}${schoolCodeStr} — Task Details`;
     }
 
     const sessionName = rec.session === 'PM' ? 'Evening Session' : 'Morning Session';
+    let dateFormatted = rec.record_date || '';
+    if (rec.record_date && rec.record_date.includes('-')) {
+        const parts = rec.record_date.split('-');
+        if (parts.length === 3) dateFormatted = `${parts[2]}.${parts[1]}.${parts[0]}`;
+    }
+
+    const timeStr = rec.completed_at || rec.updated_at || '';
+    let formattedTime = '';
+    if (timeStr && timeStr.includes(' ')) {
+        const [dPart, tPart] = timeStr.split(' ');
+        if (tPart) {
+            const [h, m] = tPart.split(':');
+            let hour = parseInt(h, 10);
+            const ampm = hour >= 12 ? 'PM' : 'AM';
+            hour = hour % 12 || 12;
+            const padH = hour < 10 ? '0' + hour : hour;
+            formattedTime = `${padH}:${m} ${ampm}`;
+        }
+    }
+    const sessionDateTime = formattedTime 
+        ? `${sessionName} - ${dateFormatted} ${formattedTime}`
+        : `${sessionName} - ${dateFormatted}`;
+
     const issueVal = (rec.issue_reference && rec.issue_reference.trim() !== '') ? escapeHtml(rec.issue_reference.trim()) : 'None';
     const refundVal = (rec.refund_reference && rec.refund_reference.trim() !== '') ? escapeHtml(rec.refund_reference.trim()) : 'None';
     const dupVal = (rec.duplicate_receipt_no && rec.duplicate_receipt_no.trim() !== '') ? escapeHtml(rec.duplicate_receipt_no.trim()) : 'None';
-    const remarkVal = (rec.custom_remark && rec.custom_remark.trim() !== '') ? escapeHtml(rec.custom_remark.trim()) : 'None';
+
+    let rawRemark = rec.custom_remark;
+    if (!rawRemark || rawRemark.trim() === '') {
+        if (rec.overall_remark && rec.overall_remark !== 'Completed' && rec.overall_remark !== 'Pending') {
+            rawRemark = rec.overall_remark;
+        }
+    }
+    const remarkVal = (rawRemark && rawRemark.trim() !== '') ? escapeHtml(rawRemark.trim()) : 'None';
     const completedUser = rec.completed_by_user || 'None';
-    const completedTime = rec.completed_at || rec.updated_at || '';
 
     if (modalBody) {
         modalBody.innerHTML = `
-            <div style="background: #ffffff; border: 1px solid #000000; border-radius: 6px; padding: 14px; margin-bottom: 14px;">
-                <table style="width: 100%; border-collapse: collapse; font-size: 13px; color: #000000;">
-                    <tbody>
-                        <tr style="border-bottom: 1px solid #e5e7eb;">
-                            <td style="padding: 6px 4px; font-weight: 700; width: 40%; color: #000000;">School Name:</td>
-                            <td style="padding: 6px 4px; color: #000000;">${escapeHtml(rec.school_name)} (${escapeHtml(rec.school_code || '')})</td>
-                        </tr>
-                        <tr style="border-bottom: 1px solid #e5e7eb;">
-                            <td style="padding: 6px 4px; font-weight: 700; color: #000000;">Session, Date & Time:</td>
-                            <td style="padding: 6px 4px; color: #000000;">${sessionName} - ${escapeHtml(rec.record_date || '')} ${escapeHtml(completedTime)}</td>
-                        </tr>
-                        <tr style="border-bottom: 1px solid #e5e7eb;">
-                            <td style="padding: 6px 4px; font-weight: 700; color: #000000;">Completed By:</td>
-                            <td style="padding: 6px 4px; color: #000000; font-weight: 600;">${escapeHtml(completedUser)}</td>
-                        </tr>
-                        <tr style="border-bottom: 1px solid #e5e7eb;">
-                            <td style="padding: 6px 4px; font-weight: 700; color: #000000;">Reconciliation:</td>
-                            <td style="padding: 6px 4px; color: #000000;">${issueVal}</td>
-                        </tr>
-                        <tr style="border-bottom: 1px solid #e5e7eb;">
-                            <td style="padding: 6px 4px; font-weight: 700; color: #000000;">Refund:</td>
-                            <td style="padding: 6px 4px; color: #000000;">${refundVal}</td>
-                        </tr>
-                        <tr style="border-bottom: 1px solid #e5e7eb;">
-                            <td style="padding: 6px 4px; font-weight: 700; color: #000000;">Duplicate:</td>
-                            <td style="padding: 6px 4px; color: #000000;">${dupVal}</td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 6px 4px; font-weight: 700; color: #000000;">Remarks:</td>
-                            <td style="padding: 6px 4px; color: #000000;">${remarkVal}</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-            <div style="border: 1px solid #000000; border-radius: 4px; padding: 8px 12px; color: #000000; font-size: 12px; font-weight: 600;">
-                Task verified and recorded in reconciliation log.
-            </div>
+            <table style="width: 100%; border-collapse: collapse; font-size: 13px; color: #000000; margin-bottom: 0;">
+                <tbody>
+                    <tr style="border-bottom: 1px solid #e5e7eb;">
+                        <td style="padding: 10px 8px; font-weight: 700; width: 38%; color: #000000;">School Name:</td>
+                        <td style="padding: 10px 8px; color: #000000;">${escapeHtml(rec.school_name)} ${rec.school_code ? `(${escapeHtml(rec.school_code)})` : ''}</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #e5e7eb;">
+                        <td style="padding: 10px 8px; font-weight: 700; color: #000000;">Session, Date & Time:</td>
+                        <td style="padding: 10px 8px; color: #000000;">${escapeHtml(sessionDateTime)}</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #e5e7eb;">
+                        <td style="padding: 10px 8px; font-weight: 700; color: #000000;">Completed By:</td>
+                        <td style="padding: 10px 8px; color: #000000; font-weight: 600;">${escapeHtml(completedUser)}</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #e5e7eb;">
+                        <td style="padding: 10px 8px; font-weight: 700; color: #000000;">Reconciliation:</td>
+                        <td style="padding: 10px 8px; color: #000000;">${issueVal}</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #e5e7eb;">
+                        <td style="padding: 10px 8px; font-weight: 700; color: #000000;">Refund:</td>
+                        <td style="padding: 10px 8px; color: #000000;">${refundVal}</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #e5e7eb;">
+                        <td style="padding: 10px 8px; font-weight: 700; color: #000000;">Duplicate:</td>
+                        <td style="padding: 10px 8px; color: #000000;">${dupVal}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px 8px; font-weight: 700; color: #000000;">Remarks:</td>
+                        <td style="padding: 10px 8px; color: #000000; word-break: break-word;">${remarkVal}</td>
+                    </tr>
+                </tbody>
+            </table>
         `;
     }
 
-    if (backdrop) backdrop.style.display = 'block';
-    if (modal) modal.style.display = 'block';
+    if (backdrop) {
+        backdrop.style.display = 'flex';
+        void backdrop.offsetWidth; // trigger reflow
+        backdrop.classList.add('show');
+    }
 }
 
+/**
+ * Close task details modal
+ */
 function closeTaskDetailsModal() {
     const backdrop = document.getElementById('taskDetailsModalBackdrop');
-    const modal = document.getElementById('taskDetailsModal');
-    if (backdrop) backdrop.style.display = 'none';
-    if (modal) modal.style.display = 'none';
+    if (backdrop) {
+        backdrop.classList.remove('show');
+        setTimeout(() => {
+            if (!backdrop.classList.contains('show')) {
+                backdrop.style.display = 'none';
+            }
+        }, 150);
+    }
 }
+
+/**
+ * Backdrop click handler to close modal when clicking outside dialog
+ */
+function handleTaskDetailsBackdropClick(e) {
+    if (e.target && e.target.id === 'taskDetailsModalBackdrop') {
+        closeTaskDetailsModal();
+    }
+}
+
+// Close task details popup on Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeTaskDetailsModal();
+    }
+});
 
 function clearDateFilter() {
     const dateInput = document.getElementById('filterDate');

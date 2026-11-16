@@ -150,19 +150,17 @@ include __DIR__ . '/includes/header.php';
 </div>
 
 <!-- ==========================================================================
-     TASK DETAILS VIEW MODAL
+     TASK DETAILS VIEW MODAL (POPUP ONLY, SINGLE CLOSE ICON BUTTON)
      ========================================================================== -->
-<div id="taskDetailsModalBackdrop" class="modal-backdrop" style="display: none;" onclick="closeTaskDetailsModal()"></div>
-<div id="taskDetailsModal" class="confirm-modal-box" style="display: none; max-width: 580px; width: 90%;">
-    <div class="confirm-modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-        <div class="confirm-modal-title" id="taskDetailsTitle" style="font-size: 16px; font-weight: 800; color: var(--text-main);">Task Details</div>
-        <button type="button" onclick="closeTaskDetailsModal()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-muted);">&times;</button>
-    </div>
-    <div class="confirm-modal-body" id="taskDetailsBody" style="margin-bottom: 18px;">
-        <!-- Filled dynamically -->
-    </div>
-    <div class="confirm-modal-footer" style="display: flex; justify-content: flex-end; gap: 10px;">
-        <button type="button" class="btn btn-outline-secondary" onclick="closeTaskDetailsModal()">Close</button>
+<div id="taskDetailsModalBackdrop" class="modal-backdrop" style="display: none;" onclick="handleTaskDetailsBackdropClick(event)">
+    <div id="taskDetailsModal" class="modal-dialog" style="max-width: 520px; width: 92%; background: #ffffff; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.25), 0 10px 10px -5px rgba(0, 0, 0, 0.1); border: 1px solid #000000; overflow: hidden;" onclick="event.stopPropagation()">
+        <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid #e5e7eb; background: #ffffff;">
+            <div id="taskDetailsTitle" style="font-size: 16px; font-weight: 800; color: #000000; margin: 0; line-height: 1.3;">Task Details</div>
+            <button type="button" class="modal-close-btn" onclick="closeTaskDetailsModal()" title="Close" aria-label="Close" style="background: none; border: none; font-size: 24px; line-height: 1; cursor: pointer; color: #000000; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; border-radius: 6px; padding: 0;">&times;</button>
+        </div>
+        <div class="modal-body" id="taskDetailsBody" style="padding: 20px; font-size: 13px; color: #000000; background: #ffffff;">
+            <!-- Filled dynamically -->
+        </div>
     </div>
 </div>
 
