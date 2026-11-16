@@ -797,42 +797,13 @@ function renderWorkspace(rec) {
         if (dupDescInput) dupDescInput.disabled = false;
     }
 
-    // Update workspace mark completed buttons
-    const wsMarkBtn = document.getElementById('btnWsMarkCompleted');
-    const footerMarkBtn = document.getElementById('btnFooterMarkCompleted');
-    if (wsMarkBtn) {
-        if (rec.is_completed == 1) {
-            wsMarkBtn.className = 'btn btn-sm btn-complete-active';
-            wsMarkBtn.innerHTML = '✓ Completed';
-            wsMarkBtn.title = 'Reconciliation completed. Click to reopen if needed';
-            wsMarkBtn.onclick = () => toggleSchoolCompletion(rec.school_id, 0);
-        } else {
-            wsMarkBtn.className = 'btn btn-sm btn-success';
-            wsMarkBtn.innerHTML = '✓ Mark Completed';
-            wsMarkBtn.title = 'Mark reconciliation for this school as completed';
-            wsMarkBtn.onclick = () => toggleSchoolCompletion(rec.school_id, 1);
-        }
-    }
-    if (footerMarkBtn) {
-        if (rec.is_completed == 1) {
-            footerMarkBtn.className = 'btn btn-outline-secondary';
-            footerMarkBtn.innerHTML = '↺ Reopen Task (Set Pending)';
-            footerMarkBtn.style.color = '#b45309';
-            footerMarkBtn.style.borderColor = '#fcd34d';
-            footerMarkBtn.onclick = () => toggleSchoolCompletion(rec.school_id, 0);
-        } else {
-            footerMarkBtn.className = 'btn btn-payment-success';
-            footerMarkBtn.innerHTML = '✓ Mark Reconciliation as Completed';
-            footerMarkBtn.style.color = '#ffffff';
-            footerMarkBtn.style.borderColor = 'transparent';
-            footerMarkBtn.onclick = () => toggleSchoolCompletion(rec.school_id, 1);
-        }
-    }
-
-    // Update reset button visibility (Admin/Super Admin only)
+    // Update reset button & footer visibility (Admin/Super Admin only)
     const resetBtn = document.getElementById('btnResetRecord');
+    const wsFooter = document.getElementById('workspaceFooter');
     if (resetBtn) {
-        resetBtn.style.display = rec.is_completed ? 'inline-flex' : 'none';
+        const canShow = (rec.is_completed == 1) ? 'inline-flex' : 'none';
+        resetBtn.style.display = canShow;
+        if (wsFooter) wsFooter.style.display = (rec.is_completed == 1) ? 'flex' : 'none';
     }
 }
 

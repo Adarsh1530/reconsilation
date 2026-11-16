@@ -136,9 +136,6 @@ include __DIR__ . '/includes/header.php';
             <span id="wsUrgentBadge" class="status-badge badge-urgent-cases" style="display: none;">Urgent Cases</span>
         </div>
         <div style="display: flex; align-items: center; gap: 8px;">
-            <button type="button" class="btn btn-sm btn-success" id="btnWsMarkCompleted" title="Mark reconciliation as completed">
-                ✓ Mark Completed
-            </button>
             <button type="button" class="btn btn-sm btn-outline-secondary" id="btnCloseWorkspace">
                 Close Workspace
             </button>
@@ -235,15 +232,7 @@ include __DIR__ . '/includes/header.php';
             </div>
         </div>
 
-        <div class="workspace-footer">
-            <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
-                <button type="button" class="btn btn-payment-success" id="btnFooterMarkCompleted" style="font-weight: 700; padding: 8px 20px; font-size: 13px;">
-                    ✓ Mark Reconciliation as Completed
-                </button>
-                <div style="font-size: 12px; color: var(--text-muted);">
-                    Actions save immediately to the database and register into the audit trail.
-                </div>
-            </div>
+        <div class="workspace-footer" id="workspaceFooter" style="display: none; justify-content: flex-end; padding-top: 14px;">
             <div>
                 <button type="button" class="btn btn-sm btn-outline-secondary" id="btnResetRecord" style="display:none; color: #dc2626; border-color: #fecaca;">
                     ↺ Reset to Pending
