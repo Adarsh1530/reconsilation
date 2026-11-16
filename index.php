@@ -272,15 +272,12 @@ $csrf_token = generate_csrf_token();
             <div class="hint-badges">
                 <div class="hint-item" onclick="fillCreds('superadmin', 'Admin@123')">
                     <span class="hint-role">Super Admin</span>
-                    <span class="hint-creds">superadmin / Admin@123</span>
                 </div>
                 <div class="hint-item" onclick="fillCreds('admin', 'Admin@123')">
                     <span class="hint-role">Admin</span>
-                    <span class="hint-creds">admin / Admin@123</span>
                 </div>
                 <div class="hint-item" onclick="fillCreds('staff_user', 'Admin@123')">
                     <span class="hint-role">Staff User</span>
-                    <span class="hint-creds">staff_user / Admin@123</span>
                 </div>
             </div>
         </div>
