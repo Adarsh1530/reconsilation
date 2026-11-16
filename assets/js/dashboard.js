@@ -1410,7 +1410,7 @@ function fetchActiveNotifications() {
                             <div class="announcement-content">
                                 <div class="announcement-title">
                                     <span>${escapeHtml(n.title)}</span>
-                                    <span style="font-size: 11px; padding: 2px 7px; border-radius: 4px; background: rgba(0,0,0,0.07); font-weight: 700;">${typeBadge}</span>
+                                    <span class="announcement-type-tag">${typeBadge}</span>
                                 </div>
                                 <div class="announcement-message">${escapeHtml(n.message)}</div>
                                 <div class="announcement-meta">
