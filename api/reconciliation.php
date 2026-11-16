@@ -685,18 +685,11 @@ try {
                 $msg = 'School marked as Completed.';
                 $act = 'COMPLETED';
             } else {
-                // Revert to pending
+                // Revert to pending while preserving all stored reference numbers and data for re-editing
                 $upd = $pdo->prepare("
                     UPDATE reconciliation_records 
                     SET is_completed = 0,
                         overall_remark = 'Pending',
-                        payment_status = 'NONE',
-                        reconciliation_status = 'NONE',
-                        refund_status = 'NONE',
-                        issue_reference = NULL,
-                        refund_reference = NULL,
-                        duplicate_receipt_no = NULL,
-                        duplicate_receipt_desc = NULL,
                         completed_by = NULL,
                         completed_at = NULL,
                         updated_by = :uid,
@@ -707,8 +700,8 @@ try {
                     ':uid' => $user['id'],
                     ':id' => $rec['id']
                 ]);
-                $msg = 'School reopened and marked as Pending.';
-                $act = 'MARKED_PENDING';
+                $msg = 'School reopened and marked as Pending for re-editing.';
+                $act = 'REOPENED';
             }
 
             $new_rec = get_or_create_record($pdo, $school_id, $date, $session);

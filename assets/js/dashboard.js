@@ -417,18 +417,18 @@ function renderMainTable(records) {
             `;
         }
 
-        // Action buttons: When completed, regular users have Complete & Select disabled and see "Completed" only.
-        // Only Super Admin can access again even if it is completed.
+        // Action buttons: When completed, do NOT show Select option. Show Reopen Task button to re-edit.
+        // For pending tasks: show Select button only.
         let actionBtn = '';
         if (rec.is_completed == 1) {
             actionBtn = `
                 <div style="display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;">
                     ${adminResolveBtn}
-                    <button type="button" class="btn btn-sm btn-complete-active" onclick="event.stopPropagation(); toggleSchoolCompletion(${rec.school_id}, 0)" title="Click to reopen task">
+                    <span class="badge-status-completed" style="cursor: pointer;" onclick="event.stopPropagation(); toggleSchoolCompletion(${rec.school_id}, 0)" title="View stored data and reopen task">
                         ✓ Completed
-                    </button>
-                    <button class="btn btn-sm btn-outline-secondary" onclick="handleSelectSchoolFromTable(${rec.school_id})" title="Access school workspace">
-                        Select
+                    </span>
+                    <button type="button" class="btn btn-sm btn-reopen-task" onclick="event.stopPropagation(); toggleSchoolCompletion(${rec.school_id}, 0)" title="View stored data and reopen task to re-edit">
+                        ↺ Reopen Task
                     </button>
                 </div>
             `;
@@ -1079,22 +1079,77 @@ window.toggleSchoolCompletion = function(schoolId, targetCompleted) {
     const rec = recordsCache.find(r => parseInt(r.school_id, 10) === parseInt(schoolId, 10));
     if (!rec) return;
 
-    // CASE 1: Reopening a completed task
+    // CASE 1: Reopening a completed task - show all currently stored data and allow user to view & reopen to re-edit
     if (targetCompleted === 0) {
-        confirmModal({
-            title: 'Reopen Reconciliation Task',
-            message: `
-                <div style="font-size: 13.5px; line-height: 1.5;">
-                    <p style="margin-bottom: 8px;">
-                        Are you sure you want to reopen the reconciliation task for <strong>${escapeHtml(rec.school_name)}</strong>?
-                    </p>
-                    <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 6px; padding: 10px 12px; color: #92400e; font-size: 12.5px;">
-                        ⚠️ This will return the school status back to <strong>Pending</strong> for the <strong>${currentSession} Session (${currentDate})</strong>.
-                    </div>
+        // Build clear overview of all data currently stored for this school
+        let paymentBadge = '<span style="color: #64748b; font-style: italic;">None</span>';
+        if (rec.payment_status === 'PAYMENT_SUCCESS') {
+            paymentBadge = '<span style="color: #059669; font-weight: 700;">✓ Payment Success</span>';
+        } else if (rec.payment_status === 'NO_PAYMENT') {
+            paymentBadge = '<span style="color: #2563eb; font-weight: 700;">✓ No Payment</span>';
+        }
+
+        const issueVal = rec.issue_reference ? `<strong style="color: #b91c1c;">${escapeHtml(rec.issue_reference)}</strong>` : '<span style="color: #94a3b8; font-style: italic;">None</span>';
+        const refundVal = rec.refund_reference ? `<strong style="color: #d97706;">${escapeHtml(rec.refund_reference)}</strong>` : '<span style="color: #94a3b8; font-style: italic;">None</span>';
+        
+        let dupVal = '<span style="color: #94a3b8; font-style: italic;">None</span>';
+        if (rec.duplicate_receipt_no) {
+            dupVal = `<strong style="color: #0284c7;">${escapeHtml(rec.duplicate_receipt_no)}</strong>`;
+            if (rec.duplicate_receipt_desc) {
+                dupVal += ` <span style="color: #64748b; font-size: 12px;">(${escapeHtml(rec.duplicate_receipt_desc)})</span>`;
+            }
+        }
+        
+        const remarkVal = rec.custom_remark ? `<span style="color: #047857; font-weight: 500;">${escapeHtml(rec.custom_remark)}</span>` : '<span style="color: #94a3b8; font-style: italic;">None</span>';
+        const completedUser = rec.completed_by_user || rec.updated_by_user || 'User';
+        const completedTime = rec.completed_at || rec.updated_at || '';
+
+        const modalHtml = `
+            <div style="font-size: 13.5px; line-height: 1.5;">
+                <p style="margin-bottom: 10px; color: #1e293b; font-weight: 500;">
+                    Currently stored reconciliation data for <strong>${escapeHtml(rec.school_name)}</strong>:
+                </p>
+                <div style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 8px; padding: 12px 14px; margin-bottom: 12px;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                        <tbody>
+                            <tr style="border-bottom: 1px solid #f1f5f9;">
+                                <td style="padding: 6px 4px; font-weight: 600; color: #475569; width: 42%;">Payment Status:</td>
+                                <td style="padding: 6px 4px;">${paymentBadge}</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid #f1f5f9;">
+                                <td style="padding: 6px 4px; font-weight: 600; color: #475569;">Reconciliation Issue:</td>
+                                <td style="padding: 6px 4px;">${issueVal}</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid #f1f5f9;">
+                                <td style="padding: 6px 4px; font-weight: 600; color: #475569;">Refund Reference:</td>
+                                <td style="padding: 6px 4px;">${refundVal}</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid #f1f5f9;">
+                                <td style="padding: 6px 4px; font-weight: 600; color: #475569;">Duplicate Receipt:</td>
+                                <td style="padding: 6px 4px;">${dupVal}</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid #f1f5f9;">
+                                <td style="padding: 6px 4px; font-weight: 600; color: #475569;">Custom Remark:</td>
+                                <td style="padding: 6px 4px;">${remarkVal}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 6px 4px; font-weight: 600; color: #475569;">Completed By:</td>
+                                <td style="padding: 6px 4px; color: #0f172a;">👤 ${escapeHtml(completedUser)} ${completedTime ? `<span style="color:#64748b; font-size:12px;">(${escapeHtml(completedTime)})</span>` : ''}</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
-            `,
-            confirmText: 'Yes, Reopen Task',
-            cancelText: 'Cancel',
+                <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 6px; padding: 10px 12px; color: #92400e; font-size: 12.5px;">
+                    ℹ️ Reopening will switch this school back to <strong>Pending</strong>. All stored data above is preserved and will be loaded directly into the workspace so you can re-edit and update it.
+                </div>
+            </div>
+        `;
+
+        confirmModal({
+            title: 'Stored Reconciliation Data & Reopen Task',
+            message: modalHtml,
+            confirmText: '↺ Reopen Task to Re-edit',
+            cancelText: 'Cancel / View Only',
             confirmClass: 'btn-warning',
             onConfirm: () => {
                 postReconAction('mark_completed', {
@@ -1102,7 +1157,12 @@ window.toggleSchoolCompletion = function(schoolId, targetCompleted) {
                     date: currentDate,
                     session: currentSession,
                     is_completed: 0
-                }, 'Reopening school task...');
+                }, 'Reopening school task...', () => {
+                    setTimeout(() => {
+                        handleSelectSchoolFromTable(schoolId);
+                        showToast('success', 'Task Reopened', 'School reopened for re-editing. Stored data is loaded into the workspace.');
+                    }, 250);
+                });
             }
         });
         return;
@@ -1283,7 +1343,7 @@ window.toggleSchoolCompletion = function(schoolId, targetCompleted) {
 /**
  * Universal AJAX POST handler for reconciliation operations
  */
-function postReconAction(actionName, data, loadingMsg = 'Processing...') {
+function postReconAction(actionName, data, loadingMsg = 'Processing...', onSuccess = null) {
     const formData = new FormData();
     formData.append('csrf_token', getCsrfToken());
     for (const key in data) {
@@ -1315,6 +1375,14 @@ function postReconAction(actionName, data, loadingMsg = 'Processing...') {
             // Fresh network reload with cache-busting to ensure complete DB parity
             loadSessionRecords();
             unlockWorkspace();
+
+            if (typeof onSuccess === 'function') {
+                try {
+                    onSuccess(res);
+                } catch (e) {
+                    console.error('Error in postReconAction onSuccess callback:', e);
+                }
+            }
         } else {
             showToast('error', 'Operation Failed', res.message || 'Error executing request.');
         }

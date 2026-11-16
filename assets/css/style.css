@@ -583,6 +583,44 @@ body {
     color: #ffffff;
 }
 
+.btn-reopen-task {
+    background: #fffbeb;
+    border: 1.5px solid #f59e0b;
+    color: #b45309;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.btn-reopen-task:hover {
+    background: #fef3c7;
+    border-color: #d97706;
+    color: #92400e;
+    box-shadow: 0 2px 6px rgba(245, 158, 11, 0.25);
+}
+
+.badge-status-completed {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 10px;
+    background: #059669;
+    border: 1.5px solid #047857;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 700;
+    border-radius: var(--radius-sm);
+    box-shadow: 0 2px 6px rgba(5, 150, 105, 0.25);
+    transition: opacity 0.15s ease;
+}
+
+.badge-status-completed:hover {
+    opacity: 0.9;
+}
+
 .btn-sm {
     padding: 6px 12px;
     font-size: 12px;
