@@ -82,6 +82,18 @@ include __DIR__ . '/includes/header.php';
         <button type="button" class="btn btn-sm" id="btnCurrentMonth" style="background: #f1f5f9; color: #475569; font-weight: 600; border: 1px solid #cbd5e1;" title="Jump to Current Month">
             Current Month
         </button>
+
+        <div style="height: 24px; width: 1px; background: var(--border-color); margin: 0 4px;"></div>
+
+        <!-- Session Selector Filter -->
+        <div style="display: flex; align-items: center; gap: 6px;">
+            <label for="reportSessionSelect" style="font-size: 13px; font-weight: 700; color: var(--text-main); margin-bottom: 0;">Session:</label>
+            <select id="reportSessionSelect" class="form-control" style="width: auto; min-width: 185px; font-size: 13px; font-weight: 700; padding: 6px 10px; height: 35px; border-radius: 6px;">
+                <option value="ALL">All Sessions (AM & PM)</option>
+                <option value="AM">Morning Session (AM)</option>
+                <option value="PM">Evening Session (PM)</option>
+            </select>
+        </div>
     </div>
 </div>
 

@@ -21,7 +21,10 @@ function getSessionDisplayName(sess) {
 function initDashboard() {
     // Read session & date from DOM elements if present
     const sessionInput = document.getElementById('currentSessionInput');
-    if (sessionInput) currentSession = sessionInput.value;
+    if (sessionInput) {
+        currentSession = sessionInput.value;
+        try { sessionStorage.setItem('active_reconciliation_session', currentSession); } catch (e) {}
+    }
 
     const dateInput = document.getElementById('workingDateInput');
     const todayStr = new Date().toISOString().split('T')[0];
@@ -128,6 +131,9 @@ function initDashboard() {
  */
 function switchSession(newSession) {
     currentSession = newSession;
+    try {
+        sessionStorage.setItem('active_reconciliation_session', newSession);
+    } catch (e) {}
 
     // Update active button classes
     document.querySelectorAll('.session-switch-btn').forEach(btn => {

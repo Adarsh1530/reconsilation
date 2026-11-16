@@ -149,6 +149,14 @@ function buildMonthlyReportData(PDO $pdo, int $year, int $month, string $session
         LEFT JOIN users cu ON r.completed_by = cu.id
         LEFT JOIN users uu ON r.updated_by = uu.id
         WHERE r.record_date BETWEEN :start_date AND :end_date
+          AND (
+              r.is_completed = 1 
+              OR r.payment_status IN ('NO_PAYMENT', 'PAYMENT_SUCCESS') 
+              OR (r.reconciliation_status = 'ISSUE' AND r.issue_reference IS NOT NULL AND r.issue_reference != '')
+              OR (r.refund_status = 'PROCESSED' AND r.refund_reference IS NOT NULL AND r.refund_reference != '')
+              OR (r.duplicate_receipt_no IS NOT NULL AND r.duplicate_receipt_no != '')
+              OR (r.custom_remark IS NOT NULL AND r.custom_remark != '')
+          )
     ";
 
     $params = [
@@ -238,16 +246,18 @@ function buildMonthlyReportData(PDO $pdo, int $year, int $month, string $session
             $refunds = [];
             $duplicates = [];
             $remarks = [];
+            $sessionRecords = [];
 
             foreach ($dayRecs as $dr) {
-                // User
-                $uName = !empty($dr['completed_by_name']) ? $dr['completed_by_name'] : (!empty($dr['completed_by_user']) ? $dr['completed_by_user'] : (!empty($dr['updated_by_user']) ? $dr['updated_by_user'] : ''));
+                // User: prioritize username
+                $uName = !empty($dr['completed_by_user']) ? $dr['completed_by_user'] : (!empty($dr['completed_by_name']) ? $dr['completed_by_name'] : (!empty($dr['updated_by_user']) ? $dr['updated_by_user'] : ''));
                 if ($uName && !in_array($uName, $users)) {
                     $users[] = $uName;
                 }
 
                 // Time
                 $rawTime = $dr['completed_at'] ?: $dr['updated_at'];
+                $tFormatted = '';
                 if ($rawTime) {
                     $tFormatted = date('h:i A', strtotime($rawTime));
                     if (!in_array($tFormatted, $times)) {
@@ -256,37 +266,71 @@ function buildMonthlyReportData(PDO $pdo, int $year, int $month, string $session
                 }
 
                 // Payment Status: NO_PAYMENT -> Nil, PAYMENT_SUCCESS -> PS
+                $itemPaymentStatus = '';
                 if ($dr['payment_status'] === 'NO_PAYMENT') {
+                    $itemPaymentStatus = 'Nil';
                     if (!in_array('Nil', $paymentStatuses)) $paymentStatuses[] = 'Nil';
                 } elseif ($dr['payment_status'] === 'PAYMENT_SUCCESS') {
+                    $itemPaymentStatus = 'PS';
                     if (!in_array('PS', $paymentStatuses)) $paymentStatuses[] = 'PS';
                 }
 
                 // Recon issues
+                $itemIssue = '';
                 if ($dr['reconciliation_status'] === 'ISSUE' && !empty($dr['issue_reference'])) {
+                    $itemIssue = $dr['issue_reference'];
                     if (!in_array($dr['issue_reference'], $issues)) $issues[] = $dr['issue_reference'];
                 }
 
                 // Refunds
+                $itemRefund = '';
                 if ($dr['refund_status'] === 'PROCESSED' && !empty($dr['refund_reference'])) {
+                    $itemRefund = $dr['refund_reference'];
                     if (!in_array($dr['refund_reference'], $refunds)) $refunds[] = $dr['refund_reference'];
                 }
 
                 // Duplicates (include description for report / PDF / Excel)
+                $itemDup = '';
                 if (!empty($dr['duplicate_receipt_no'])) {
                     $dupText = $dr['duplicate_receipt_no'];
                     if (!empty($dr['duplicate_receipt_desc'])) {
                         $dupText .= ' (' . trim($dr['duplicate_receipt_desc']) . ')';
                     }
+                    $itemDup = $dupText;
+                    if (!in_array($dupText, $duplicates)) {
+                        $duplicates[] = $dupText;
+                    }
+                } elseif (!empty($dr['duplicate_receipt_desc'])) {
+                    $dupText = trim($dr['duplicate_receipt_desc']);
+                    $itemDup = $dupText;
                     if (!in_array($dupText, $duplicates)) {
                         $duplicates[] = $dupText;
                     }
                 }
 
-                // Custom remarks
+                // Remarks: capture custom_remark or overall_remark (entered remarks)
+                $itemRemark = '';
                 if (!empty($dr['custom_remark'])) {
-                    if (!in_array($dr['custom_remark'], $remarks)) $remarks[] = $dr['custom_remark'];
+                    $itemRemark = trim($dr['custom_remark']);
+                } elseif (!empty($dr['overall_remark']) && !in_array($dr['overall_remark'], ['Completed', 'Pending', 'Payment Success', 'No Payment', 'Refund', 'Reconciliation Issue'])) {
+                    $itemRemark = trim($dr['overall_remark']);
                 }
+                if (!empty($itemRemark) && !in_array($itemRemark, $remarks)) {
+                    $remarks[] = $itemRemark;
+                }
+
+                // Session record structure for frontend breakdown
+                $sessionRecords[] = [
+                    'session' => $dr['session'],
+                    'session_name' => ($dr['session'] === 'PM' ? 'Evening' : 'Morning'),
+                    'user' => $uName,
+                    'time' => $tFormatted,
+                    'payment_status' => $itemPaymentStatus,
+                    'issue' => $itemIssue,
+                    'refund' => $itemRefund,
+                    'duplicate' => $itemDup,
+                    'remark' => $itemRemark
+                ];
             }
 
             // Build reference formatted text (matching ref_report.xlsx layout)
@@ -299,18 +343,22 @@ function buildMonthlyReportData(PDO $pdo, int $year, int $month, string $session
                 foreach ($paymentStatuses as $ps) {
                     $textLines[] = $ps;
                 }
-            } else {
-                $textLines[] = 'Nil';
             }
 
             // Recon line
-            $textLines[] = 'Recon: ' . (!empty($issues) ? implode(', ', $issues) : '');
+            if (!empty($issues)) {
+                $textLines[] = 'Recon: ' . implode(', ', $issues);
+            }
 
             // Refund line
-            $textLines[] = 'Refund: ' . (!empty($refunds) ? implode(', ', $refunds) : '');
+            if (!empty($refunds)) {
+                $textLines[] = 'Refund: ' . implode(', ', $refunds);
+            }
 
             // Duplicate line
-            $textLines[] = 'Duplicate: ' . (!empty($duplicates) ? implode(', ', $duplicates) : '');
+            if (!empty($duplicates)) {
+                $textLines[] = 'Duplicate: ' . implode(', ', $duplicates);
+            }
 
             // Custom remark if present
             if (!empty($remarks)) {
@@ -328,6 +376,7 @@ function buildMonthlyReportData(PDO $pdo, int $year, int $month, string $session
                 'refunds' => $refunds,
                 'duplicates' => $duplicates,
                 'remarks' => $remarks,
+                'session_records' => $sessionRecords,
                 'formatted_text' => $formattedText,
                 'record_count' => count($dayRecs)
             ];

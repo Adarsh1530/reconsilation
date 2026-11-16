@@ -12,11 +12,33 @@ let currentReportData = null;
 
 function initMonthlyReport() {
     const monthInput = document.getElementById('reportMonthInput');
+    const sessionSelect = document.getElementById('reportSessionSelect');
     const prevBtn = document.getElementById('btnPrevMonth');
     const nextBtn = document.getElementById('btnNextMonth');
     const currentBtn = document.getElementById('btnCurrentMonth');
     const downloadExcelBtn = document.getElementById('btnDownloadExcel');
     const downloadPdfBtn = document.getElementById('btnDownloadPdf');
+
+    // Sync session from URL param or sessionStorage if present
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlSession = urlParams.get('session');
+    if (sessionSelect) {
+        if (urlSession && ['AM', 'PM', 'ALL'].includes(urlSession.toUpperCase())) {
+            sessionSelect.value = urlSession.toUpperCase();
+        } else {
+            const savedSession = sessionStorage.getItem('active_reconciliation_session');
+            if (savedSession && ['AM', 'PM'].includes(savedSession)) {
+                sessionSelect.value = savedSession;
+            }
+        }
+
+        sessionSelect.addEventListener('change', () => {
+            try {
+                sessionStorage.setItem('active_reconciliation_session', sessionSelect.value);
+            } catch (e) {}
+            loadMonthlyReport();
+        });
+    }
 
     // Initial Load
     loadMonthlyReport();
@@ -56,7 +78,8 @@ function initMonthlyReport() {
     if (downloadExcelBtn) {
         downloadExcelBtn.addEventListener('click', () => {
             const { year, month } = getSelectedYearMonth();
-            const url = `api/monthly_report.php?action=export_excel&year=${year}&month=${month}&session=ALL`;
+            const currentSession = sessionSelect ? sessionSelect.value : 'ALL';
+            const url = `api/monthly_report.php?action=export_excel&year=${year}&month=${month}&session=${currentSession}`;
             window.location.href = url;
         });
     }
@@ -105,6 +128,8 @@ function shiftMonth(delta) {
  */
 function loadMonthlyReport() {
     const { year, month } = getSelectedYearMonth();
+    const sessionSelect = document.getElementById('reportSessionSelect');
+    const session = sessionSelect ? sessionSelect.value : 'ALL';
 
     const tbody = document.getElementById('reportMatrixTbody');
     if (tbody) {
@@ -120,7 +145,7 @@ function loadMonthlyReport() {
         `;
     }
 
-    fetch(`api/monthly_report.php?action=get_monthly_data&year=${year}&month=${month}&session=ALL`)
+    fetch(`api/monthly_report.php?action=get_monthly_data&year=${year}&month=${month}&session=${session}`)
         .then(res => res.json())
         .then(res => {
             if (res.success && res.data) {
@@ -160,8 +185,13 @@ function renderReportSummary(data) {
     const matrixMonthLabel = document.getElementById('matrixMonthLabel');
     const printMonthLabel = document.getElementById('printMonthLabel');
 
-    if (matrixMonthLabel) matrixMonthLabel.textContent = data.month_label ?? '';
-    if (printMonthLabel) printMonthLabel.textContent = data.month_label ?? '';
+    let sessionLabel = '';
+    if (data.session_filter === 'AM') sessionLabel = ' • Morning Session (AM)';
+    else if (data.session_filter === 'PM') sessionLabel = ' • Evening Session (PM)';
+    else sessionLabel = ' • All Sessions (AM & PM)';
+
+    if (matrixMonthLabel) matrixMonthLabel.textContent = `${data.month_label ?? ''}${sessionLabel}`;
+    if (printMonthLabel) printMonthLabel.textContent = `${data.month_label ?? ''}${sessionLabel}`;
 }
 
 /**
@@ -228,40 +258,96 @@ function renderMatrixTable(data) {
                 continue;
             }
 
-            // Cell has data! Render matching ref_report.xlsx layout
-            const usersStr = cell.users && cell.users.length > 0 ? cell.users.join(', ') : '-';
-            const timesStr = cell.times && cell.times.length > 0 ? cell.times.join(', ') : '-';
+            const sessionRecs = cell.session_records || [];
+            let cellInnerHtml = '';
 
-            let pillsHtml = '';
-            if (cell.payment_statuses && cell.payment_statuses.length > 0) {
-                cell.payment_statuses.forEach(ps => {
-                    const pillCls = ps === 'PS' ? 'status-ps' : 'status-nil';
-                    pillsHtml += `<span class="pill-status ${pillCls}">${escapeHtml(ps)}</span>`;
+            if (sessionRecs.length > 0) {
+                const showSessionBadge = (data.session_filter === 'ALL');
+
+                sessionRecs.forEach((sr, idx) => {
+                    if (idx > 0) {
+                        cellInnerHtml += `<div style="border-top: 1px dashed #cbd5e1; margin: 4px 0; padding-top: 4px;"></div>`;
+                    }
+
+                    if (showSessionBadge) {
+                        const isPM = (sr.session === 'PM');
+                        cellInnerHtml += `
+                            <div style="margin-bottom: 3px;">
+                                <span style="font-size: 9.5px; font-weight: 800; padding: 1px 5px; border-radius: 3px; background: ${isPM ? '#f3e8ff' : '#fef3c7'}; color: ${isPM ? '#6b21a8' : '#92400e'}; border: 1px solid ${isPM ? '#d8b4fe' : '#fde68a'};">
+                                    ${isPM ? '🌙 Evening' : '☀️ Morning'}
+                                </span>
+                            </div>
+                        `;
+                    }
+
+                    if (sr.user || sr.time) {
+                        cellInnerHtml += `
+                            <div class="cell-row-user">👤 ${escapeHtml(sr.user || '-')} ${sr.time ? `<span style="font-size: 10px; color: #64748b; font-weight: normal;">· ${escapeHtml(sr.time)}</span>` : ''}</div>
+                        `;
+                    }
+
+                    if (sr.payment_status) {
+                        const pillCls = (sr.payment_status === 'PS') ? 'status-ps' : 'status-nil';
+                        cellInnerHtml += `
+                            <div class="cell-row-pills"><span class="pill-status ${pillCls}">${escapeHtml(sr.payment_status)}</span></div>
+                        `;
+                    }
+
+                    if (sr.issue) {
+                        cellInnerHtml += `
+                            <div class="cell-row-item">Recon: <span class="cell-row-recon">${escapeHtml(sr.issue)}</span></div>
+                        `;
+                    }
+
+                    if (sr.refund) {
+                        cellInnerHtml += `
+                            <div class="cell-row-item">Refund: <span class="cell-row-refund">${escapeHtml(sr.refund)}</span></div>
+                        `;
+                    }
+
+                    if (sr.duplicate) {
+                        cellInnerHtml += `
+                            <div class="cell-row-item">Duplicate: <span class="cell-row-dup">${escapeHtml(sr.duplicate)}</span></div>
+                        `;
+                    }
+
+                    if (sr.remark) {
+                        cellInnerHtml += `
+                            <div class="cell-row-item" style="font-size: 10.5px; color: #475569; margin-top: 2px;">💬 ${escapeHtml(sr.remark)}</div>
+                        `;
+                    }
                 });
             } else {
-                pillsHtml += `<span class="pill-status status-nil">Nil</span>`;
-            }
+                const usersStr = cell.users && cell.users.length > 0 ? cell.users.join(', ') : '-';
+                const timesStr = cell.times && cell.times.length > 0 ? cell.times.join(', ') : '-';
 
-            const reconVal = cell.issues && cell.issues.length > 0 ? cell.issues.join(', ') : '';
-            const refundVal = cell.refunds && cell.refunds.length > 0 ? cell.refunds.join(', ') : '';
-            const dupVal = cell.duplicates && cell.duplicates.length > 0 ? cell.duplicates.join(', ') : '';
+                let pillsHtml = '';
+                if (cell.payment_statuses && cell.payment_statuses.length > 0) {
+                    cell.payment_statuses.forEach(ps => {
+                        const pillCls = ps === 'PS' ? 'status-ps' : 'status-nil';
+                        pillsHtml += `<span class="pill-status ${pillCls}">${escapeHtml(ps)}</span>`;
+                    });
+                }
+
+                const reconVal = cell.issues && cell.issues.length > 0 ? cell.issues.join(', ') : '';
+                const refundVal = cell.refunds && cell.refunds.length > 0 ? cell.refunds.join(', ') : '';
+                const dupVal = cell.duplicates && cell.duplicates.length > 0 ? cell.duplicates.join(', ') : '';
+
+                cellInnerHtml += `
+                    <div class="cell-row-user">👤 ${escapeHtml(usersStr)}</div>
+                    <div class="cell-row-time">🕒 ${escapeHtml(timesStr)}</div>
+                    ${pillsHtml ? `<div class="cell-row-pills">${pillsHtml}</div>` : ''}
+                    ${reconVal ? `<div class="cell-row-item">Recon: <span class="cell-row-recon">${escapeHtml(reconVal)}</span></div>` : ''}
+                    ${refundVal ? `<div class="cell-row-item">Refund: <span class="cell-row-refund">${escapeHtml(refundVal)}</span></div>` : ''}
+                    ${dupVal ? `<div class="cell-row-item">Duplicate: <span class="cell-row-dup">${escapeHtml(dupVal)}</span></div>` : ''}
+                    ${cell.remarks && cell.remarks.length > 0 ? `<div class="cell-row-item" style="font-size: 10.5px; color: #475569; margin-top: 2px;">💬 ${escapeHtml(cell.remarks.join(' | '))}</div>` : ''}
+                `;
+            }
 
             tbodyHtml += `
                 <td class="data-cell" onclick="openCellDetailModal(${sRow.school_id}, ${d})" title="Click to view full day details">
                     <div class="cell-block">
-                        <div class="cell-row-user">👤 ${escapeHtml(usersStr)}</div>
-                        <div class="cell-row-time">🕒 ${escapeHtml(timesStr)}</div>
-                        <div class="cell-row-pills">${pillsHtml}</div>
-                        <div class="cell-row-item">
-                            Recon: ${reconVal ? `<span class="cell-row-recon">${escapeHtml(reconVal)}</span>` : ''}
-                        </div>
-                        <div class="cell-row-item">
-                            Refund: ${refundVal ? `<span class="cell-row-refund">${escapeHtml(refundVal)}</span>` : ''}
-                        </div>
-                        <div class="cell-row-item">
-                            Duplicate: ${dupVal ? `<span class="cell-row-dup">${escapeHtml(dupVal)}</span>` : ''}
-                        </div>
-                        ${cell.remarks && cell.remarks.length > 0 ? `<div class="cell-row-item" style="font-size: 10.5px; color: #475569; margin-top: 2px;">💬 ${escapeHtml(cell.remarks.join(' | '))}</div>` : ''}
+                        ${cellInnerHtml}
                     </div>
                 </td>
             `;
