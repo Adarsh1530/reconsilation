@@ -381,46 +381,46 @@ function renderMainTable(records) {
 
         // Status badge & remark text
         const hasCustomRemark = rec.custom_remark && rec.custom_remark.trim() !== '';
-        let remarkHtml = '';
 
-        if (isEscalatedOpen) {
-            remarkHtml = `<span class="status-badge badge-urgent-cases" title="Urgent Case: Issue count exceeds 10 - Escalated to Admin & Super Admin Panel">Urgent Cases</span>`;
-        } else if (isResolved) {
-            const resTooltip = rec.overall_remark || ('Resolved by ' + (rec.urgent_resolved_by_user || 'Admin'));
-            remarkHtml = `<span class="status-badge badge-completed" title="${escapeHtml(resTooltip)}">Resolved</span>`;
-        } else if (rec.payment_status === 'PAYMENT_SUCCESS' && hasCustomRemark) {
-            remarkHtml = `
-                <span class="status-badge badge-payment-success">Payment Success</span>
-                <span class="status-badge badge-completed" style="max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="Remark: ${escapeHtml(rec.custom_remark)}">💬 ${escapeHtml(rec.custom_remark)}</span>
-            `;
-        } else if (rec.payment_status === 'NO_PAYMENT' && hasCustomRemark) {
-            remarkHtml = `
-                <span class="status-badge badge-no-payment">No Payment</span>
-                <span class="status-badge badge-pending" style="max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="Remark: ${escapeHtml(rec.custom_remark)}">💬 ${escapeHtml(rec.custom_remark)}</span>
-            `;
-        } else if (rec.payment_status === 'PAYMENT_SUCCESS') {
-            remarkHtml = `<span class="status-badge badge-payment-success">Payment Success</span>`;
-        } else if (rec.payment_status === 'NO_PAYMENT') {
-            remarkHtml = `<span class="status-badge badge-no-payment">No Payment</span>`;
-        } else if (hasCustomRemark) {
-            const bCls = rec.is_completed == 1 ? 'badge-completed' : 'badge-pending';
-            remarkHtml = `<span class="status-badge ${bCls}" style="max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="Remark: ${escapeHtml(rec.custom_remark)}">💬 ${escapeHtml(rec.custom_remark)}</span>`;
-        } else if (rec.is_completed == 1) {
-            remarkHtml = `<span class="status-badge badge-completed">Completed</span>`;
-        } else {
-            remarkHtml = `<span class="status-badge badge-pending">Pending</span>`;
-        }
-
-        // Reconciliation column display: overview of number only
-        let reconDisplay = '<span style="color: #94a3b8; font-size: 12.5px; white-space: nowrap;">No Issue Reported</span>';
+        // Reconciliation column display
+        // Accurately reflects reconciliation status: Issue reference -> Payment Success -> No Payment -> Completed -> Pending
+        let reconDisplay = '<span class="status-badge badge-pending">Pending</span>';
         if (rec.reconciliation_status === 'ISSUE' && rec.issue_reference) {
             reconDisplay = `<strong style="font-family: monospace; font-size: 13px; color: #dc2626; white-space: nowrap;" title="Reconciliation Issue: ${escapeHtml(rec.issue_reference)}">${escapeHtml(rec.issue_reference)}</strong>`;
+        } else if (isEscalatedOpen) {
+            reconDisplay = `<span class="status-badge badge-urgent-cases" title="Urgent Case: Issue count exceeds 10 - Escalated to Admin & Super Admin Panel">Urgent Cases</span>`;
+        } else if (isResolved) {
+            const resTooltip = rec.overall_remark || ('Resolved by ' + (rec.urgent_resolved_by_user || 'Admin'));
+            reconDisplay = `<span class="status-badge badge-completed" title="${escapeHtml(resTooltip)}">Resolved</span>`;
+        } else if (rec.payment_status === 'PAYMENT_SUCCESS') {
+            reconDisplay = `<span class="status-badge badge-payment-success">Payment Success</span>`;
+        } else if (rec.payment_status === 'NO_PAYMENT') {
+            reconDisplay = `<span class="status-badge badge-no-payment">No Payment</span>`;
+        } else if (rec.is_completed == 1) {
+            reconDisplay = `<span class="status-badge badge-completed">Completed</span>`;
+        } else {
+            reconDisplay = `<span class="status-badge badge-pending">Pending</span>`;
         }
 
         // Refund display: overview of number only
         let refundDisplay = '<span style="color: #94a3b8; font-size: 12.5px; white-space: nowrap;">None</span>';
         if (rec.refund_status === 'PROCESSED' && rec.refund_reference) {
             refundDisplay = `<strong style="font-family: monospace; font-size: 13px; color: #ea580c; white-space: nowrap;" title="Refund Reference: ${escapeHtml(rec.refund_reference)}">${escapeHtml(rec.refund_reference)}</strong>`;
+        }
+
+        // Dedicated Duplicate Receipt column display: overview of number only
+        let dupDisplay = '<span style="color: #94a3b8; font-size: 12.5px; white-space: nowrap;">None</span>';
+        if (rec.duplicate_receipt_no && rec.duplicate_receipt_no.trim() !== '') {
+            const desc = rec.duplicate_receipt_desc ? ` - ${escapeHtml(rec.duplicate_receipt_desc)}` : '';
+            dupDisplay = `<strong style="font-family: monospace; font-size: 13px; color: #0284c7; white-space: nowrap;" title="Duplicate Receipt: ${escapeHtml(rec.duplicate_receipt_no)}${desc}">${escapeHtml(rec.duplicate_receipt_no)}</strong>`;
+        }
+
+        // Remarks column display: shows custom notes (or overall notes if not standard status)
+        let remarkHtml = '<span style="color: #94a3b8; font-size: 12.5px; white-space: nowrap;">None</span>';
+        if (hasCustomRemark) {
+            remarkHtml = `<span class="status-badge badge-completed" style="max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; background: #e0e7ff; color: #4338ca; border: 1px solid #c7d2fe;" title="Remark: ${escapeHtml(rec.custom_remark)}">💬 ${escapeHtml(rec.custom_remark)}</span>`;
+        } else if (rec.overall_remark && !['Pending', 'Completed', 'Payment Success', 'No Payment', 'Reconciliation Issue', 'Urgent Cases', 'Resolved'].includes(rec.overall_remark)) {
+            remarkHtml = `<span style="color: #475569; font-size: 12.5px; white-space: nowrap;" title="${escapeHtml(rec.overall_remark)}">${escapeHtml(rec.overall_remark)}</span>`;
         }
 
         // Admin resolve button if escalated
@@ -1135,13 +1135,34 @@ window.toggleSchoolCompletion = function(schoolId, targetCompleted) {
     }
 
     // CASE 2: Marking school statement as Completed
+    // Check whether the active workspace has pending entries for this school
+    let activeIssue = '';
+    let activeRefund = '';
+    let activeDupNo = '';
+    let activeDupDesc = '';
+    let activeRemark = '';
+
+    if (activeSchoolId && parseInt(activeSchoolId, 10) === parseInt(schoolId, 10)) {
+        activeIssue = document.getElementById('wsIssueInput')?.value.trim() || '';
+        activeRefund = document.getElementById('wsRefundInput')?.value.trim() || '';
+        activeDupNo = document.getElementById('wsDupReceiptNo')?.value.trim() || '';
+        activeDupDesc = document.getElementById('wsDupReceiptDesc')?.value.trim() || '';
+        activeRemark = document.getElementById('wsRemarkInput')?.value.trim() || '';
+    }
+
+    const effectiveIssue = activeIssue || rec.issue_reference || '';
+    const effectiveRefund = activeRefund || rec.refund_reference || '';
+    const effectiveDupNo = activeDupNo || rec.duplicate_receipt_no || '';
+    const effectiveRemark = activeRemark || rec.custom_remark || '';
+
     // Check whether the school statement has been verified / completed
     const hasPayment = (rec.payment_status === 'NO_PAYMENT' || rec.payment_status === 'PAYMENT_SUCCESS');
-    const hasIssue = (rec.reconciliation_status === 'ISSUE' && rec.issue_reference);
-    const hasRefund = (rec.refund_status === 'PROCESSED' && rec.refund_reference);
-    const hasCustomRemark = (rec.custom_remark && rec.custom_remark.trim() !== '');
+    const hasIssue = Boolean(effectiveIssue);
+    const hasRefund = Boolean(effectiveRefund);
+    const hasDuplicate = Boolean(effectiveDupNo);
+    const hasCustomRemark = Boolean(effectiveRemark);
     const hasReconOrRefund = hasIssue || hasRefund;
-    const hasStatementAction = hasPayment || hasReconOrRefund || hasCustomRemark;
+    const hasStatementAction = hasPayment || hasReconOrRefund || hasDuplicate || hasCustomRemark;
 
     let paymentLabel = '<span style="color: #94a3b8; font-style: italic;">Not Selected</span>';
     if (rec.payment_status === 'PAYMENT_SUCCESS') {
@@ -1153,18 +1174,23 @@ window.toggleSchoolCompletion = function(schoolId, targetCompleted) {
     }
 
     let issueLabel = '<span style="color: #94a3b8; font-style: italic;">None</span>';
-    if (rec.reconciliation_status === 'ISSUE') {
-        issueLabel = `<span style="color: #ef4444; font-weight: 700;">Issue (${escapeHtml(rec.issue_reference)})</span>`;
+    if (effectiveIssue) {
+        issueLabel = `<span style="color: #ef4444; font-weight: 700;">Issue (${escapeHtml(effectiveIssue)})</span>`;
     }
 
     let refundLabel = '<span style="color: #94a3b8; font-style: italic;">None</span>';
-    if (rec.refund_status === 'PROCESSED') {
-        refundLabel = `<span style="color: #f97316; font-weight: 700;">Refund (${escapeHtml(rec.refund_reference)})</span>`;
+    if (effectiveRefund) {
+        refundLabel = `<span style="color: #f97316; font-weight: 700;">Refund (${escapeHtml(effectiveRefund)})</span>`;
+    }
+
+    let dupLabel = '<span style="color: #94a3b8; font-style: italic;">None</span>';
+    if (effectiveDupNo) {
+        dupLabel = `<span style="color: #0284c7; font-weight: 700;">${escapeHtml(effectiveDupNo)}</span>`;
     }
 
     let customRemarkLabel = '<span style="color: #94a3b8; font-style: italic;">None</span>';
-    if (hasCustomRemark) {
-        customRemarkLabel = `<span style="color: #6366f1; font-weight: 700;">${escapeHtml(rec.custom_remark)}</span>`;
+    if (effectiveRemark) {
+        customRemarkLabel = `<span style="color: #6366f1; font-weight: 700;">${escapeHtml(effectiveRemark)}</span>`;
     }
 
     let statementNoticeHtml = '';
@@ -1176,6 +1202,8 @@ window.toggleSchoolCompletion = function(schoolId, targetCompleted) {
             noteMsg = 'Reconciliation issue and/or refund details are recorded. Per operating rules, No Payment / Payment Success selection is not required.';
         } else if (hasPayment) {
             noteMsg = 'School payment status has been recorded for this statement.';
+        } else if (hasDuplicate) {
+            noteMsg = 'Duplicate receipt details have been recorded for this statement.';
         } else if (hasCustomRemark) {
             noteMsg = 'A custom remark has been saved for this statement.';
         }
@@ -1197,7 +1225,7 @@ window.toggleSchoolCompletion = function(schoolId, targetCompleted) {
                     <span>⚠️ School Statement Action Not Yet Selected</span>
                 </div>
                 <div style="font-size: 12.5px; color: #78350f; line-height: 1.4;">
-                    Neither Payment Option, Reconciliation Issue, Refund, nor Custom Remark has been recorded for this school statement yet.
+                    Neither Payment Option, Reconciliation Issue, Refund, Duplicate Receipt, nor Custom Remark has been recorded for this school statement yet.
                 </div>
             </div>
         `;
@@ -1223,6 +1251,7 @@ window.toggleSchoolCompletion = function(schoolId, targetCompleted) {
                     <div><span style="color: var(--text-muted);">Payment Status:</span> ${paymentLabel}</div>
                     <div><span style="color: var(--text-muted);">Reconciliation:</span> ${issueLabel}</div>
                     <div><span style="color: var(--text-muted);">Refund:</span> ${refundLabel}</div>
+                    <div><span style="color: var(--text-muted);">Duplicate:</span> ${dupLabel}</div>
                     <div><span style="color: var(--text-muted);">Custom Remark:</span> ${customRemarkLabel}</div>
                 </div>
             </div>
@@ -1242,12 +1271,19 @@ window.toggleSchoolCompletion = function(schoolId, targetCompleted) {
         cancelText: 'Cancel',
         confirmClass: 'btn-payment-success',
         onConfirm: () => {
-            postReconAction('mark_completed', {
+            const payload = {
                 school_id: schoolId,
                 date: currentDate,
                 session: currentSession,
                 is_completed: 1
-            }, 'Marking school completed...');
+            };
+            if (activeIssue) payload.issue_reference = activeIssue;
+            if (activeRefund) payload.refund_reference = activeRefund;
+            if (activeDupNo) payload.duplicate_receipt_no = activeDupNo;
+            if (activeDupDesc) payload.duplicate_receipt_desc = activeDupDesc;
+            if (activeRemark) payload.custom_remark = activeRemark;
+
+            postReconAction('mark_completed', payload, 'Marking school completed...');
         }
     });
 
