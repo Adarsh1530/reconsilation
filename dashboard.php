@@ -175,7 +175,7 @@ include __DIR__ . '/includes/header.php';
                     ⚠️ Reconciliation Issue
                 </button>
                 <div class="form-group" style="margin-bottom: 0;">
-                    <input type="text" id="wsIssueInput" class="form-control" placeholder="Enter issue reference (e.g. REF102, 123)" autocomplete="off">
+                    <input type="text" id="wsIssueInput" class="form-control" placeholder="enter the no.of recon" autocomplete="off">
                     <div id="wsIssueWarning" class="input-warning-msg"></div>
                 </div>
                 <div style="display: flex; align-items: center; margin-top: 6px;">
@@ -196,7 +196,7 @@ include __DIR__ . '/includes/header.php';
                     🔄 Refund Process
                 </button>
                 <div class="form-group" style="margin-bottom: 0;">
-                    <input type="text" id="wsRefundInput" class="form-control" placeholder="Enter refund details or code" autocomplete="off">
+                    <input type="text" id="wsRefundInput" class="form-control" placeholder="enter the no.of refund" autocomplete="off">
                 </div>
             </div>
 
@@ -210,10 +210,10 @@ include __DIR__ . '/includes/header.php';
                     📄 Save Duplicate Receipt
                 </button>
                 <div class="form-group" style="margin-bottom: 8px;">
-                    <input type="text" id="wsDupReceiptNo" class="form-control" placeholder="Enter receipt number (e.g. REC-1002)" autocomplete="off">
+                    <input type="text" id="wsDupReceiptNo" class="form-control" placeholder="enter the no.of duplicate" autocomplete="off">
                 </div>
                 <div class="form-group" style="margin-bottom: 0;">
-                    <input type="text" id="wsDupReceiptDesc" class="form-control" placeholder="Enter receipt description or reason" autocomplete="off">
+                    <input type="text" id="wsDupReceiptDesc" class="form-control" placeholder="enter the description" autocomplete="off">
                 </div>
             </div>
 
