@@ -32,3 +32,6 @@ define('REFUND_PROCESSED', 'PROCESSED');
 
 // Default Warning Threshold for Issue Ref
 define('DEFAULT_REF_WARNING_LEN', 10);
+
+// Warning Prompt Throttling: Max 1–2 warning prompt occurrences per Unique ID per date
+define('MAX_UNIQUE_ID_WARNING_PROMPTS', 2);

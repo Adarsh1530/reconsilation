@@ -96,6 +96,15 @@ switch ($requestUri) {
         chdir($baseDir);
         require $baseDir . '/logout.php';
         exit;
+    case '/scheduler':
+    case '/scheduler.php':
+    case '/api/scheduler':
+    case '/api/scheduler.php':
+        $_SERVER['SCRIPT_NAME'] = '/api/scheduler.php';
+        $_SERVER['PHP_SELF'] = '/api/scheduler.php';
+        chdir($baseDir . '/api');
+        require $baseDir . '/api/scheduler.php';
+        exit;
 }
 
 // Check for direct file (excluding this router itself)

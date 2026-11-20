@@ -60,7 +60,25 @@ try {
             $stmt->execute($params);
             $cases = $stmt->fetchAll();
 
-            json_response(['success' => true, 'data' => $cases]);
+            // Validate against Morning session and Unique ID bypass rule
+            $filteredCases = [];
+            foreach ($cases as $c) {
+                $isMorningValid = check_morning_session_validation($pdo, $c['school_id'], $c['record_date'], $c['issue_reference']);
+                $c['morning_validated'] = $isMorningValid ? 1 : 0;
+                
+                // If evening case and morning is already valid/resolved, auto-resolve to prevent duplicate warning loop
+                if ($c['session'] === SESSION_PM && $isMorningValid && $c['status'] === 'Open') {
+                    try {
+                        $upd = $pdo->prepare("UPDATE urgent_cases SET status = 'Resolved', description = 'Auto-resolved: Validated in Morning session', resolved_at = NOW() WHERE id = ?");
+                        $upd->execute([$c['id']]);
+                        $c['status'] = 'Resolved';
+                        $c['description'] = 'Auto-resolved: Validated in Morning session';
+                    } catch (Exception $e) {}
+                }
+                $filteredCases[] = $c;
+            }
+
+            json_response(['success' => true, 'data' => $filteredCases]);
             break;
 
         /**

@@ -99,15 +99,45 @@ function initDashboard() {
     const issueInput = document.getElementById('wsIssueInput');
     const issueWarning = document.getElementById('wsIssueWarning');
     if (issueInput && issueWarning) {
+        let warningDebounce = null;
         issueInput.addEventListener('input', (e) => {
             const val = e.target.value.trim();
             const isAbove = val.length > warningThreshold || (!isNaN(val) && val !== '' && parseFloat(val) > 10);
-            if (isAbove) {
-                issueWarning.classList.add('show');
-                issueWarning.innerHTML = `⚠️ Value exceeds 10 (${val}). Saving will automatically escalate this school to the Admin & Super Admin panel.`;
-            } else {
+            if (!isAbove) {
                 issueWarning.classList.remove('show');
+                return;
             }
+
+            // Real-time server check for Unique ID prompt count & Morning session validation
+            clearTimeout(warningDebounce);
+            warningDebounce = setTimeout(() => {
+                if (!activeSchoolId || !val) {
+                    issueWarning.classList.add('show');
+                    issueWarning.innerHTML = `⚠️ Value exceeds 10 (${escapeHtml(val)}). Saving will automatically escalate this school to the Admin & Super Admin panel.`;
+                    return;
+                }
+                fetch(`api/reconciliation.php?action=check_unique_id&school_id=${activeSchoolId}&record_date=${currentDate}&session=${currentSession}&unique_id=${encodeURIComponent(val)}`)
+                    .then(res => res.json())
+                    .then(res => {
+                        if (res.success && res.data) {
+                            if (res.data.should_bypass) {
+                                issueWarning.classList.remove('show');
+                            } else if (res.data.prompt_count >= 2) {
+                                issueWarning.classList.remove('show');
+                            } else {
+                                issueWarning.classList.add('show');
+                                issueWarning.innerHTML = `⚠️ Value exceeds 10 (${escapeHtml(val)}). Saving will automatically escalate this school to the Admin & Super Admin panel. (Notice ${res.data.prompt_count + 1} of 2)`;
+                            }
+                        } else {
+                            issueWarning.classList.add('show');
+                            issueWarning.innerHTML = `⚠️ Value exceeds 10 (${escapeHtml(val)}). Saving will automatically escalate this school to the Admin & Super Admin panel.`;
+                        }
+                    })
+                    .catch(() => {
+                        issueWarning.classList.add('show');
+                        issueWarning.innerHTML = `⚠️ Value exceeds 10 (${escapeHtml(val)}). Saving will automatically escalate this school to the Admin & Super Admin panel.`;
+                    });
+            }, 250);
         });
     }
 
@@ -307,6 +337,11 @@ function renderUrgentAlerts(records) {
         if (r.reconciliation_status === 'ISSUE' && r.issue_reference) {
             const isAbove10 = (r.issue_reference.length > warningThreshold) || (!isNaN(r.issue_reference) && parseFloat(r.issue_reference) > 10);
             const isResolved = (r.urgent_case_status === 'Resolved' || (r.overall_remark && r.overall_remark.startsWith('Resolved by')));
+
+            // Suppress warnings if morning session validated or warning is bypassed
+            if (r.is_warning_bypassed == 1 || r.morning_validated == 1) {
+                return;
+            }
 
             // Only show active unresolved alerts on the dashboard (completed/resolved tasks are in the Completed Tasks module)
             if (!isResolved && (isAbove10 || r.is_urgent == 1)) {
@@ -727,12 +762,18 @@ function renderWorkspace(rec) {
     const issueVal = issueInput.value.trim();
     const isAbove = issueVal.length > warningThreshold || (!isNaN(issueVal) && issueVal !== '' && parseFloat(issueVal) > 10);
     if (isAbove) {
-        issueWarning.classList.add('show');
-        if (rec.urgent_case_status === 'Resolved' || (rec.overall_remark && rec.overall_remark.startsWith('Resolved by'))) {
+        if (rec.is_warning_bypassed == 1 || rec.morning_validated == 1) {
+            issueWarning.classList.remove('show');
+        } else if (rec.prompt_count >= 2) {
+            issueWarning.classList.remove('show');
+        } else if (rec.urgent_case_status === 'Resolved' || (rec.overall_remark && rec.overall_remark.startsWith('Resolved by'))) {
+            issueWarning.classList.add('show');
             issueWarning.innerHTML = `✅ Issue (Count: ${escapeHtml(issueVal)}) was Resolved by ${escapeHtml(rec.urgent_resolved_by_user || 'Admin')}.`;
             issueWarning.style.color = '#059669';
         } else {
-            issueWarning.innerHTML = `⚠️ Value exceeds 10 (${escapeHtml(issueVal)}). Saving will automatically escalate this school to the Admin & Super Admin panel.`;
+            issueWarning.classList.add('show');
+            const noticeSuffix = (rec.prompt_count !== undefined) ? ` (Notice ${Math.min(2, (rec.prompt_count || 0) + 1)} of 2)` : '';
+            issueWarning.innerHTML = `⚠️ Value exceeds 10 (${escapeHtml(issueVal)}). Saving will automatically escalate this school to the Admin & Super Admin panel.${noticeSuffix}`;
             issueWarning.style.color = '#b91c1c';
         }
     } else {

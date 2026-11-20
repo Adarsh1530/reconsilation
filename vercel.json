@@ -15,5 +15,15 @@
       "src": "/(.*)",
       "dest": "/api/index.php"
     }
+  ],
+  "crons": [
+    {
+      "path": "/api/scheduler.php?action=run_morning_queue",
+      "schedule": "0 7 * * *"
+    },
+    {
+      "path": "/api/scheduler.php?action=run_evening_queue",
+      "schedule": "0 14 * * *"
+    }
   ]
 }

@@ -113,6 +113,20 @@ try {
             $stmt->execute([':record_date' => $date, ':session' => $session]);
             $schools = $stmt->fetchAll();
 
+            ensure_warning_tracking_table($pdo);
+            foreach ($schools as &$sch) {
+                $uid = $sch['issue_reference'] ?: ($sch['refund_reference'] ?: $sch['duplicate_receipt_no']);
+                $sch['morning_validated'] = check_morning_session_validation($pdo, $sch['school_id'], $date, $uid) ? 1 : 0;
+                
+                // If in evening session and morning was valid, bypass urgent warning
+                if ($session === SESSION_PM && $sch['morning_validated']) {
+                    $sch['is_warning_bypassed'] = 1;
+                } else {
+                    $sch['is_warning_bypassed'] = 0;
+                }
+            }
+            unset($sch);
+
             $summary = get_reconciliation_summary($date, $session);
 
             json_response([
@@ -123,6 +137,49 @@ try {
                     'summary' => $summary,
                     'records' => $schools
                 ]
+            ]);
+            break;
+
+        /**
+         * Real-time Check for Unique ID Discrepancy & Prompt Throttling
+         */
+        case 'check_unique_id':
+            $school_id = (int)($_GET['school_id'] ?? $_POST['school_id'] ?? 0);
+            $date = $_GET['date'] ?? $_POST['date'] ?? date('Y-m-d');
+            $session = $_GET['session'] ?? $_POST['session'] ?? SESSION_AM;
+            $unique_id = trim($_GET['unique_id'] ?? $_POST['unique_id'] ?? '');
+
+            ensure_warning_tracking_table($pdo);
+            $morningValid = check_morning_session_validation($pdo, $school_id, $date, $unique_id);
+
+            $warnCount = 0;
+            if (!empty($unique_id)) {
+                $stmt = $pdo->prepare("SELECT warning_count, is_bypassed FROM recon_unique_id_warnings WHERE unique_id = ? AND record_date = ? AND session = ?");
+                $stmt->execute([$unique_id, $date, $session]);
+                $wRow = $stmt->fetch();
+                $warnCount = $wRow ? (int)$wRow['warning_count'] : 0;
+            }
+            $isCapped = ($warnCount >= MAX_UNIQUE_ID_WARNING_PROMPTS);
+
+            $shouldBypass = false;
+            $reason = '';
+            if ($session === SESSION_PM && $morningValid) {
+                $shouldBypass = true;
+                $reason = 'Unique ID verified & validated in Morning Session. Warning bypassed.';
+            } elseif ($isCapped) {
+                $shouldBypass = true;
+                $reason = "Warning prompt capped at threshold ({$warnCount}/" . MAX_UNIQUE_ID_WARNING_PROMPTS . "). Repeated alert suppressed.";
+            }
+
+            json_response([
+                'success' => true,
+                'unique_id' => $unique_id,
+                'morning_validated' => $morningValid,
+                'warning_count' => $warnCount,
+                'max_warnings' => MAX_UNIQUE_ID_WARNING_PROMPTS,
+                'is_capped' => $isCapped,
+                'should_bypass' => $shouldBypass,
+                'reason' => $reason
             ]);
             break;
 
@@ -283,14 +340,46 @@ try {
 
             // Check if issue reference or count goes above 10
             $isAbove10 = (mb_strlen($issue_reference) > 10) || (is_numeric($issue_reference) && (float)$issue_reference > 10);
-            if ($isAbove10) {
-                $is_urgent = 1;
-                $urgent_priority = 'High';
-                $remark = 'Urgent Cases';
-                $is_completed = 0; // Requires Admin or Super Admin resolution
+
+            // =========================================================================
+            // UNIQUE ID RECONCILIATION RULE & PROMPT THROTTLING
+            // 1. Check Morning session validation status for target date
+            // 2. Enforce prompt throttling (max 1–2 warnings per Unique ID per date)
+            // =========================================================================
+            $unique_id = $issue_reference;
+            $hasValidMorning = check_morning_session_validation($pdo, $school_id, $date, $unique_id);
+            $promptCheck = track_and_check_warning_prompt($pdo, $unique_id, $date, $school_id, $session);
+
+            $isWarningBypassed = false;
+            $bypassReason = '';
+
+            // Rule 1: Unique IDs marked as valid in Morning session do NOT trigger warnings during Evening reconciliation
+            if ($session === SESSION_PM && $hasValidMorning) {
+                $isWarningBypassed = true;
+                $bypassReason = 'Verified via Morning Session (Warning Bypassed)';
+            }
+            // Rule 2: Warning prompts for Unique ID discrepancies limited to max 1–2 occurrences
+            elseif (!$promptCheck['should_prompt']) {
+                $isWarningBypassed = true;
+                $bypassReason = "Warning prompt capped at threshold ({$promptCheck['warning_count']}/" . MAX_UNIQUE_ID_WARNING_PROMPTS . "). Repeated alert suppressed.";
+            }
+
+            if ($isWarningBypassed) {
+                // Bypass reconciliation warning & escalation
+                $is_urgent = 0;
+                $isAbove10 = false;
+                $remark = $bypassReason;
+                $is_completed = 1; // Resolved in session
             } else {
-                $remark = 'Reconciliation Issue';
-                $is_completed = 1;
+                if ($isAbove10) {
+                    $is_urgent = 1;
+                    $urgent_priority = 'High';
+                    $remark = 'Urgent Cases';
+                    $is_completed = 0; // Requires Admin or Super Admin resolution
+                } else {
+                    $remark = 'Reconciliation Issue';
+                    $is_completed = 1;
+                }
             }
 
             $pdo->beginTransaction();
@@ -357,14 +446,21 @@ try {
             $pdo->commit();
             log_activity('RECON_ISSUE', "Recorded Reconciliation Issue for School ID #{$school_id}: {$issue_reference} (Escalated: " . ($isAbove10 ? 'YES' : 'NO') . ")");
 
-            $msg = $isAbove10 
-                ? "Issue count/reference ({$issue_reference}) exceeds 10! Automatically moved to Admin & Super Admin panel." 
-                : "Reconciliation issue ({$issue_reference}) saved successfully.";
+            if ($isWarningBypassed) {
+                $msg = "Reconciliation record updated for {$session} session. {$bypassReason}";
+            } elseif ($isAbove10) {
+                $msg = "Issue count/reference ({$issue_reference}) exceeds 10! (Warning {$promptCheck['warning_count']}/" . MAX_UNIQUE_ID_WARNING_PROMPTS . "). Automatically escalated to Admin & Super Admin panel.";
+            } else {
+                $msg = "Reconciliation issue ({$issue_reference}) saved successfully.";
+            }
 
             json_response([
                 'success' => true,
                 'message' => $msg,
                 'record' => $new_rec,
+                'is_warning_bypassed' => $isWarningBypassed,
+                'warning_count' => $promptCheck['warning_count'],
+                'morning_validated' => $hasValidMorning ? 1 : 0,
                 'summary' => get_reconciliation_summary($date, $session)
             ]);
             break;

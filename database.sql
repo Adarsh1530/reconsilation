@@ -245,3 +245,20 @@ INSERT INTO `schools` (`id`, `code`, `name`, `contact_person`, `phone`, `email`,
 (1, 'SCH-BM', 'Blue Mount', 'Accounts Office', '+91 9876543201', 'accounts@bluemount.edu', 'Blue Mount Campus', 'https://bluemount.amserp.in/index.php/core/feescollection/onlinepayment', 'https://bluemount.amserp.in/index.php/user/login', 'admin', 'Bluemount_2026$', 'active', 1),
 (2, 'SCH-BVB', 'BVB Poochatty', 'Finance Section', '+91 9876543202', 'finance@bvbpoochatty.edu', 'Poochatty Campus, Thrissur', 'https://bvbpoochatty.amserp.in/index.php/core/feescollection/onlinepayment', 'https://bvbpoochatty.amserp.in/index.php/user/login', 'admin', 'Bvbpty@2023#&', 'active', 2),
 (3, 'SCH-DEMO', 'Demo Practice School', 'Practice Coordinator', '+91 9876543299', 'demo@practice.edu', 'Practice Virtual Campus', 'https://demo.amserp.in/index.php/core/feescollection/onlinepayment', 'https://demo.amserp.in/index.php/user/login', 'demo_admin', 'Demo@2026', 'active', 3);
+
+-- 11. Unique ID Warning Prompt Tracking (Throttling & Cross-Session Validation)
+CREATE TABLE IF NOT EXISTS `recon_unique_id_warnings` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `unique_id` VARCHAR(150) NOT NULL,
+    `record_date` DATE NOT NULL,
+    `school_id` INT NOT NULL,
+    `session` ENUM('AM', 'PM') NOT NULL,
+    `warning_count` INT NOT NULL DEFAULT 1,
+    `is_bypassed` TINYINT(1) NOT NULL DEFAULT 0,
+    `last_prompted_at` DATETIME NOT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY `uk_uid_date_session` (`unique_id`, `record_date`, `session`),
+    INDEX `idx_school_date` (`school_id`, `record_date`),
+    FOREIGN KEY (`school_id`) REFERENCES `schools`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB;
